@@ -1,92 +1,87 @@
-# cli.py
-
 import click
 from lib.models.database import initialize_database
-from lib.models.client import Client
-from lib.models.contract import Contract
-from lib.models.payment import Payment
+from lib.models.destination import Destination
+from lib.models.activity import Activity
+from lib.models.expense import Expense
+from lib.helpers import ValidatorMixin
 
-# Initialize database at startup
-initialize_database()
+class TravelCLI(ValidatorMixin):
+    def __init__(self):
+        initialize_database()
 
-@click.group()
-def cli():
-    """CLI for managing clients, contracts, and payments."""
-    pass
-
-@cli.command()
-def add_client():
-    """Add a new client with validated input."""
-    try:
-        name = click.prompt("Enter client name (or type 'q' to quit)")
-        if name.lower() in ["q", "quit"]:
+    def prompt_input(self, prompt_text, input_type=str):
+        """Prompt user for input and exit if 'q' is entered."""
+        response = click.prompt(f"{prompt_text} (or 'q' to quit)", type=input_type)
+        if str(response).lower() == 'q':
             click.echo("Exiting...")
+            raise SystemExit
+        return response
+
+    @click.group()
+    def cli():
+        """Travel Tracker CLI for managing destinations, activities, and expenses."""
+        pass
+
+    @cli.command()
+    def add_destination():
+        """Add a new destination."""
+        name = TravelCLI().prompt_input("Enter destination name")
+        country = TravelCLI().prompt_input("Enter country")
+        description = TravelCLI().prompt_input("Enter a short description")
+
+        if not TravelCLI.validate_text(name) or not TravelCLI.validate_text(country):
+            click.echo("Invalid input for name or country.")
+            return
+        
+        Destination.create(name, country, description)
+        click.echo(f"Destination '{name}' added successfully.")
+
+    @cli.command()
+    def list_destinations():
+        """List all destinations."""
+        destinations = Destination.get_all()
+        for destination in destinations:
+            click.echo(destination)
+
+    @cli.command()
+    def add_activity():
+        """Add a new activity for a destination."""
+        destination_id = TravelCLI().prompt_input("Enter destination ID", int)
+        name = TravelCLI().prompt_input("Enter activity name")
+        date = TravelCLI().prompt_input("Enter date (YYYY-MM-DD)")
+        time = TravelCLI().prompt_input("Enter time")
+        cost = TravelCLI().prompt_input("Enter activity cost", float)
+
+        if not TravelCLI.validate_positive_number(cost):
+            click.echo("Cost must be a positive number.")
             return
 
-        contact_info = click.prompt("Enter contact info (or type 'q' to quit)")
-        if contact_info.lower() in ["q", "quit"]:
-            click.echo("Exiting...")
+        Activity.create(destination_id, name, date, time, cost)
+        click.echo(f"Activity '{name}' added successfully.")
+
+    @cli.command()
+    def list_activities():
+        """List all activities for a specific destination."""
+        destination_id = TravelCLI().prompt_input("Enter destination ID", int)
+        activities = Activity.get_by_destination(destination_id)
+        for activity in activities:
+            click.echo(activity)
+
+    @cli.command()
+    def add_expense():
+        """Add an expense for an activity."""
+        activity_id = TravelCLI().prompt_input("Enter activity ID", int)
+        amount = TravelCLI().prompt_input("Enter amount", float)
+        description = TravelCLI().prompt_input("Enter expense description")
+
+        if not TravelCLI.validate_positive_number(amount):
+            click.echo("Amount must be a positive number.")
             return
 
-        address = click.prompt("Enter address (or type 'q' to quit)")
-        if address.lower() in ["q", "quit"]:
-            click.echo("Exiting...")
-            return
-
-        Client.create(name, contact_info, address)
-        click.echo(f"Client '{name}' added successfully.")
-    except ValueError as ve:
-        click.echo(f"Error: {ve}")
-    except Exception as e:
-        click.echo(f"An error occurred: {e}")
-
-@cli.command()
-def add_contract():
-    """Add a new contract for a client, with validation."""
-    try:
-        client_id = click.prompt("Enter client ID (or type 'q' to quit)", type=int)
-        if client_id == 'q':
-            return
-
-        description = click.prompt("Enter contract description (or type 'q' to quit)")
-        start_date = click.prompt("Enter start date (YYYY-MM-DD) (or type 'q' to quit)")
-        end_date = click.prompt("Enter end date (YYYY-MM-DD) (or type 'q' to quit)")
-        amount = click.prompt("Enter contract amount (or type 'q' to quit)", type=float)
-
-        Contract.create(client_id, description, start_date, end_date, amount)
-        click.echo("Contract added successfully.")
-    except ValueError as ve:
-        click.echo(f"Error: {ve}")
-    except Exception as e:
-        click.echo(f"An error occurred: {e}")
-
-@cli.command()
-def add_payment():
-    """Add a new payment for a contract, with validation."""
-    try:
-        contract_id = click.prompt("Enter contract ID (or type 'q' to quit)", type=int)
-        amount = click.prompt("Enter payment amount (or type 'q' to quit)", type=float)
-        payment_date = click.prompt("Enter payment date (YYYY-MM-DD) (or type 'q' to quit)")
-        status = click.prompt("Enter payment status (default 'pending')", default="pending")
-
-        Payment.create(contract_id, amount, payment_date, status)
-        click.echo("Payment added successfully.")
-    except ValueError as ve:
-        click.echo(f"Error: {ve}")
-    except Exception as e:
-        click.echo(f"An error occurred: {e}")
-
-# List commands and other functionalities would remain similar to previous versions.
-
-@cli.command()
-def exit():
-    """Exit the CLI."""
-    click.echo("Goodbye!")
-    raise SystemExit
+        Expense.create(activity_id, amount, description)
+        click.echo("Expense added successfully.")
 
 if __name__ == "__main__":
-    cli()
-
-
+    TravelCLI().cli()
 
 
