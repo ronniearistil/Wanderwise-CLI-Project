@@ -13,7 +13,7 @@ def initialize_database():
     CURSOR.execute('''CREATE TABLE IF NOT EXISTS destinations (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         name TEXT NOT NULL,
-                        country TEXT NOT NULL,
+                        location TEXT NOT NULL,
                         description TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )''')

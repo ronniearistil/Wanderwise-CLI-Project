@@ -5,6 +5,7 @@
 Each team member should clone the repository to create a local copy on their machine:
 # Replace URL with the actual repository URL
 - git clone git@github.com:ronniearistil/Travel-Tracker-CLI-Project.git
+-Uncheck "copy the master branch only"
 
 2. Creating a New Branch
 When working on a feature or bug fix, create a separate branch. Start by making sure the main branch is up to date, then create and switch to your new branch:
