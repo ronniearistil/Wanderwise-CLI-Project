@@ -9,35 +9,39 @@ Each team member should clone the repository to create a local copy on their mac
 2. Creating a New Branch
 When working on a feature or bug fix, create a separate branch. Start by making sure the main branch is up to date, then create and switch to your new branch:
 
-# Navigate to the main branch
-git checkout main
+# Always make a new BRANCH when working on any code you do!!!
 
-# Pull the latest changes from the main branch
-git pull origin main
+# To make a NEW branch:
+- git checkout -b whatever-name-you-want    <--- try to make sure its something related would be best!
 
-# Create and switch to a new branch (e.g., feature/add-destination)
-- git checkout -b feature/add-destination  # Replace 'feature/add-destination' with your branch name
-Naming Convention: Use descriptive branch names, such as feature/add-destination or bugfix/fix-date-format, to keep branches organized.
+# ALWAYS make sure you are in that branch that you just created:
+- git branch <---- this will show you what specific branch you are on! (Should be the new one you've created)
 
-3. Committing and Pushing Changes
-After making changes, stage, commit, and push them to the remote repository:
+# Once that is all set, then continue with the following:
+
+3. # Committing and Pushing Changes
+ After making changes, stage, commit, and push them to the remote repository:
+
 # Stage all changed files
 - git add .
 
 # Commit with a descriptive message
-- git commit -m "Added CLI functionality for listing destinations"
+- git commit -m "Make sure this message is specific to what you are doing"
 
 # Push the branch to the remote repository
-- git push origin feature/add-destination  # Replace with your branch name
+- git push origin name-of-your-repo  <----- Replace with your branch name
 
-4. Pulling Latest Changes and Merging
+ Once you've pushed the code to the repo:
+- Go to the repo and merge it to the main
+
+4. # Pulling Latest Changes and Merging
 Keep your branch up-to-date by merging changes from the main branch periodically. Always communicate with the team before merging the main branch into your own to avoid conflicts.
 
-# Switch to your branch
-- git checkout feature/add-destination  # Replace with your branch name
+# Make sure you are in the new branch for which task you are doing! 
+- git checkout feature/add-destination    <---- Replace with your branch name
 
-# Merge the latest main branch changes into your branch
-- git merge main
+# Pulling the code that your partner uploaded:
+git pull origin main <----- once your team has successfully pushed a code to the main repo pull it but make sure you are in a NEW BRANCH
 
 Important: Coordinate with us before merging to ensure everyone is aligned !!!
 
