@@ -50,17 +50,12 @@ Important: Coordinate with us before merging to ensure everyone is aligned !!!
 When your feature or bug fix is complete, create a pull request on GitHub to merge your branch into the main branch. Review any comments or requested changes from teammates or the project manager, and update your branch if needed.
 
 # Summary of Key Git Commands
-Create a new branch: 
-    - git checkout -b branch-name
-Switch branches: 
-    - git checkout branch-name
-Push branch to remote: 
-    - git push origin branch-name
-Pull latest changes: 
-    - git pull origin branch-name
-Stage files: 
-    - git add .
-Commit changes: 
-    - git commit -m "commit message"
-Merge main into your branch: 
-    -git merge main (Coordinate with team members before merging)
+- Command &  Description
+git checkout main ---> Switch to the main branch
+git pull origin main ---> Pull the latest changes from the main branch
+git checkout -b branch-name	--->Create a new branch and switch to it
+git add . --->Stage all changes
+git commit -m "message"	---> Commit changes with a message
+git push origin branch-name	--->Push your branch to the remote repository
+git pull origin main	---> Pull updates from main while on your branch
+git merge main	--->Merge main into your branch to resolve conflicts
