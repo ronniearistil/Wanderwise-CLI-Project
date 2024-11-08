@@ -8,6 +8,7 @@ ipdb = "*"
 faker = "*"
 click = "*"
 pytest = "*"
+rich = "*"
 
 [dev-packages]
 
