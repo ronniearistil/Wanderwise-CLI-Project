@@ -1,10 +1,6 @@
 import unittest
-from lib.models.activity import Activity
-from lib.models.destination import Destination
 from lib.models.user import User
-from lib.models.expense import Expense
-from lib.models.database import CONN, CURSOR
-
+from lib.models.database import CURSOR, CONN
 
 class TestUser(unittest.TestCase):
 
@@ -47,3 +43,4 @@ class TestUser(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
