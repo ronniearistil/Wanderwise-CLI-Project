@@ -10,50 +10,50 @@ def initialize_database():
     # Create users table with UNIQUE email constraint
     CURSOR.execute('''CREATE TABLE IF NOT EXISTS users (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT NOT NULL CHECK(name <> ''),  -- Ensures name is not empty
-                        email TEXT NOT NULL UNIQUE,            -- Email must be unique across users
+                        name TEXT NOT NULL CHECK(name <> ''),
+                        email TEXT NOT NULL UNIQUE,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )''')
 
-    # Create destinations table with a NOT NULL foreign key and CHECK constraints
+    # Create destinations table with UNIQUE name-location constraint
     CURSOR.execute('''CREATE TABLE IF NOT EXISTS destinations (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER NOT NULL,              -- Ensures a user is linked
-                        name TEXT NOT NULL CHECK(name <> ''),   -- Destination name cannot be empty
-                        location TEXT NOT NULL CHECK(location <> ''), -- Location cannot be empty
+                        name TEXT NOT NULL CHECK(name <> ''),
+                        location TEXT NOT NULL CHECK(location <> ''),
                         description TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE -- Deletes destination if the user is deleted
+                        UNIQUE(name, location)  -- Ensure each name-location pair is unique
                     )''')
 
-    # Create activities table with NOT NULL constraints, default values, and a CHECK on cost
+    # Create activities table with NOT NULL constraints and a CHECK on cost
     CURSOR.execute('''CREATE TABLE IF NOT EXISTS activities (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        destination_id INTEGER NOT NULL,       -- Ensures a destination is linked
-                        name TEXT NOT NULL CHECK(name <> ''),   -- Activity name cannot be empty
-                        date TEXT DEFAULT (date('now')),       -- Defaults to today's date if not provided
+                        destination_id INTEGER NOT NULL,
+                        name TEXT NOT NULL CHECK(name <> ''),
+                        date TEXT DEFAULT (date('now')),
                         time TEXT,
-                        cost REAL DEFAULT 0 CHECK(cost >= 0),  -- Cost must be non-negative
+                        cost REAL DEFAULT 0 CHECK(cost >= 0),
                         description TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY(destination_id) REFERENCES destinations(id) ON DELETE CASCADE -- Deletes activity if the destination is deleted
+                        FOREIGN KEY(destination_id) REFERENCES destinations(id) ON DELETE CASCADE
                     )''')
 
-    # Create expenses table with NOT NULL constraints, default values, and a CHECK on amount
+    # Create expenses table with NOT NULL constraints and a CHECK on amount
     CURSOR.execute('''CREATE TABLE IF NOT EXISTS expenses (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        activity_id INTEGER NOT NULL,          -- Ensures an activity is linked
-                        amount REAL NOT NULL CHECK(amount >= 0), -- Expense amount must be non-negative
+                        activity_id INTEGER NOT NULL,
+                        amount REAL NOT NULL CHECK(amount >= 0),
                         description TEXT,
-                        date TEXT DEFAULT (date('now')),       -- Defaults to today's date if not provided
-                        category TEXT NOT NULL CHECK(category <> ''), -- Category cannot be empty
+                        date TEXT DEFAULT (date('now')),
+                        category TEXT NOT NULL CHECK(category <> ''),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY(activity_id) REFERENCES activities(id) ON DELETE CASCADE -- Deletes expense if the activity is deleted
+                        FOREIGN KEY(activity_id) REFERENCES activities(id) ON DELETE CASCADE
                     )''')
 
     # Commit all table creations to the database
     CONN.commit()
     print("Database initialized with constraints.")
+
 
 
 
