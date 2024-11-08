@@ -1,4 +1,5 @@
 from lib.models.database import CURSOR, CONN
+import re
 
 class User:
     """Model for a user in the Wanderwise application."""
@@ -7,6 +8,33 @@ class User:
         """Initialize a new User instance with name and email."""
         self.name = name
         self.email = email
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        if isinstance(value, str) and value.strip():
+            self._name = value
+        else:
+            raise ValueError("Name must be a non-empty string.")
+
+    @property
+    def email(self):
+        return self._email
+
+    @staticmethod
+    def _is_valid_email(value):
+        """Basic email validation."""
+        return re.match(r"[^@]+@[^@]+\.[^@]+", value)
+
+    @name.setter
+    def email(self, value):
+        if self._is_valid_email(value):
+            self._email = value
+        else:
+            raise ValueError("Invalid email format.")
 
     @classmethod
     def create(cls, name, email):
@@ -67,5 +95,6 @@ class User:
         CURSOR.execute("DELETE FROM users WHERE id = ?", (user_id,))
         CONN.commit()
         return CURSOR.rowcount > 0
+
 
 
