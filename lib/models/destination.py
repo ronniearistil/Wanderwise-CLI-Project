@@ -1,6 +1,8 @@
 from lib.models.database import CURSOR, CONN
 
 class Destination:
+"test"
+
     """Model for a travel destination."""
 
     @classmethod
