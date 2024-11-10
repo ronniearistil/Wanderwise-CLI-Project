@@ -46,13 +46,23 @@ stack-data==0.6.3
 ## User Commands:
 python cli.py add-user – Add a new user.
 python cli.py list-users – List all users.
+
 Destination Commands:
 python cli.py add-destination – Add a new destination for a user.
+
 Activity Commands:
 python cli.py add-activity – Add a new activity for a destination.
+
 Expense Commands:
 python cli.py add-expense – Add an expense for an activity.
 Validator Methods (from ValidatorMixin in helpers.py)
+
+# Tests Commends:
+pytest
+
+## Run Seeds File
+python seeds.py
+
 
 ValidatorMixin.validate_text() – Ensures text input is valid.
 ValidatorMixin.validate_positive_number() – Ensures the number is positive.
