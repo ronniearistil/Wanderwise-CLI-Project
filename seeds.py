@@ -8,6 +8,24 @@ from datetime import datetime, timedelta
 # Initialize Faker to generate random data
 fake = Faker()
 
+# Function to initialize the database
+def initialize_database():
+    """Initialize the database by dropping and recreating all tables."""
+    # Drop tables to reset schema
+    User.drop_table(CURSOR)
+    Destination.drop_table(CURSOR)
+    Activity.drop_table(CURSOR)
+    Expense.drop_table(CURSOR)
+    
+    # Recreate tables with updated schema
+    User.create_table(CURSOR)
+    Destination.create_table(CURSOR)
+    Activity.create_table(CURSOR)
+    Expense.create_table(CURSOR)
+    
+    CONN.commit()
+    print("Database initialized with tables created.")
+
 # Function to seed users
 def seed_users(num=3):
     """Seed the users table with sample data."""
@@ -15,7 +33,7 @@ def seed_users(num=3):
     for _ in range(num):
         name = fake.name()
         email = fake.email()
-        user = User.create(name=name, email=email)
+        user = User.create(CURSOR, name=name, email=email)  # Pass CURSOR as the first argument
         # Fetch the last inserted row to get the ID
         CURSOR.execute("SELECT * FROM users WHERE id = (SELECT MAX(id) FROM users)")
         user_record = CURSOR.fetchone()  # Fetch the full record with the ID
@@ -32,7 +50,7 @@ def seed_destinations(users, num=5):
             name = fake.city()
             location = fake.country()
             description = fake.text(max_nb_chars=50)
-            destination = Destination.create(name=name, location=location, description=description, user_id=user[0])
+            destination = Destination.create(CURSOR, name, location, description, user[0])  # Match argument order
             CURSOR.execute("SELECT * FROM destinations WHERE id = (SELECT MAX(id) FROM destinations)")
             destination_record = CURSOR.fetchone()  # Fetch the full record with the ID
             destinations.append(destination_record)
@@ -55,7 +73,8 @@ def seed_activities(destinations, num_per_destination=3):
             date = fake.date_this_year()
             time = fake.time()
             cost = round(random.uniform(10, 500), 2)
-            activity = Activity.create(
+            activity_id = Activity.create(
+                CURSOR,
                 destination_id=destination[0], 
                 name=name, 
                 date=date, 
@@ -63,7 +82,7 @@ def seed_activities(destinations, num_per_destination=3):
                 cost=cost,
                 description=description
             )
-            activities.append(activity)
+            activities.append(activity_id)
     print(f"{len(activities)} activities seeded.")
     return activities
 
@@ -74,9 +93,9 @@ def seed_expenses(activity_ids, num_per_activity=2):
     for activity_id in activity_ids:
         for _ in range(num_per_activity):
             amount = round(random.uniform(10, 500), 2)
-            date = (datetime.now() - timedelta(days=random.randint(0, 30))).strftime("%Y-%m-%d")
+            date = (datetime.now() - timedelta(days=random.randint(0, 30))).strftime("%m-%d-%Y")
             category = random.choice(["Food", "Transport", "Accommodation", "Entertainment"])
-            expense = Expense.create(activity_id=activity_id, amount=amount, date=date, category=category)
+            expense = Expense.create(CURSOR, activity_id=activity_id, amount=amount, date=date, category=category)
             expenses.append(expense)
     print(f"{len(expenses)} expenses seeded.")
     return expenses
@@ -84,26 +103,20 @@ def seed_expenses(activity_ids, num_per_activity=2):
 # Main seeding function to populate the database
 def seed_all():
     """Seed the database with sample users, destinations, activities, and expenses."""
-    # Clear the tables to avoid duplicates during repeated seeding
-    clear_tables()
+    # Initialize database with updated schema
+    initialize_database()
+    
+    # Seed tables
     users = seed_users()  # Seed users first
     destinations = seed_destinations(users)  # Seed destinations with linked user_ids
     activities = seed_activities(destinations)  # Seed activities linked to destinations
-    seed_expenses(activities)  # Seed expenses linked to activities
+    seed_expenses(activities)  # Seed expenses linked to activities by passing activity IDs directly
     print("Database seeding complete.")
-
-def clear_tables():
-    """Clear all tables before seeding to avoid duplicate data."""
-    CURSOR.execute("DELETE FROM expenses")
-    CURSOR.execute("DELETE FROM activities")
-    CURSOR.execute("DELETE FROM destinations")
-    CURSOR.execute("DELETE FROM users")
-    CONN.commit()
-    print("Cleared all tables.")
 
 # Run seeding if executed directly
 if __name__ == "__main__":
     seed_all()
+
 
 
 
