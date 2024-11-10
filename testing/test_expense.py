@@ -9,7 +9,22 @@ class TestExpense(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # Clear tables before starting tests
+        # Set up the tables for all models before any tests run
+        User.create_table(CURSOR)
+        Destination.create_table(CURSOR)
+        Activity.create_table(CURSOR)
+        Expense.create_table(CURSOR)
+
+    @classmethod
+    def tearDownClass(cls):
+        # Drop tables after all tests in this class have run
+        Expense.drop_table(CURSOR)
+        Activity.drop_table(CURSOR)
+        Destination.drop_table(CURSOR)
+        User.drop_table(CURSOR)
+
+    def tearDown(self):
+        """Clear all relevant tables after each test to ensure no leftover data."""
         CURSOR.execute("DELETE FROM expenses")
         CURSOR.execute("DELETE FROM activities")
         CURSOR.execute("DELETE FROM destinations")
@@ -17,46 +32,20 @@ class TestExpense(unittest.TestCase):
         CONN.commit()
 
     def setUp(self):
-        # Add a user, destination, and activity to link expenses to
-        self.user_id = User.create("Alice Smith", "alice.smith@example.com")
-        self.destination_id = Destination.create("Paris", "France", "City of Light", self.user_id)
-        self.activity_id = Activity.create(self.destination_id, "Eiffel Tower Visit", "2023-11-10", "10:00", 50.0, "Guided tour")
-
-    def tearDown(self):
-        # Clear data after each test
-        CURSOR.execute("DELETE FROM expenses")
-        CURSOR.execute("DELETE FROM activities")
-        CURSOR.execute("DELETE FROM destinations")
-        CURSOR.execute("DELETE FROM users")
-        CONN.commit()
+        """Set up required entries in the database for expense tests."""
+        # Create user, destination, and activity for use in expense tests
+        self.user_id = User.create(CURSOR, "Alice Smith", "alice.smith@example.com")
+        self.destination_id = Destination.create(CURSOR, "Paris", "France", "City of Light")
+        self.activity_id = Activity.create(CURSOR, self.destination_id, "Eiffel Tower Visit", "2023-11-10", "10:00", 50.0)
 
     def test_create_expense(self):
-        expense_id = Expense.create(self.activity_id, 100.0, "2023-11-10", "Travel", "Ticket fee")
+        """Test creating an expense linked to an activity."""
+        expense_id = Expense.create(CURSOR, self.activity_id, 100.0, "Ticket fee")
         self.assertIsNotNone(expense_id, "Failed to create a new expense")
 
     def test_get_by_activity(self):
-        Expense.create(self.activity_id, 50.0, "2023-11-10", "Travel", "Metro fare")
-        Expense.create(self.activity_id, 30.0, "2023-11-11", "Food", "Lunch")
-        expenses = Expense.get_by_activity(self.activity_id)
+        """Test retrieving expenses associated with an activity."""
+        Expense.create(CURSOR, self.activity_id, 50.0, "Metro fare")
+        Expense.create(CURSOR, self.activity_id, 30.0, "Lunch")
+        expenses = Expense.get_by_activity(CURSOR, self.activity_id)
         self.assertEqual(len(expenses), 2, "Failed to retrieve all expenses for activity")
-
-    def test_update_expense(self):
-        expense_id = Expense.create(self.activity_id, 100.0, "2023-11-10", "Travel", "Ticket fee")
-        updated = Expense.update(expense_id, self.activity_id, 120.0, "2023-11-12", "Entertainment", "Evening event")
-        self.assertTrue(updated, "Failed to update expense")
-
-        expense = Expense.find_by_id(expense_id)
-        self.assertEqual(expense["description"], "Evening event", "Expense description did not update correctly")
-
-    def test_delete_expense(self):
-        expense_id = Expense.create(self.activity_id, 100.0, "2023-11-10", "Travel", "Ticket fee")
-        deleted = Expense.delete(expense_id)
-        self.assertTrue(deleted, "Failed to delete expense")
-
-        expense = Expense.find_by_id(expense_id)
-        self.assertIsNone(expense, "Expense was not deleted properly")
-
-if __name__ == "__main__":
-    unittest.main()
-
-

@@ -1,85 +1,82 @@
 from lib.models.database import CURSOR, CONN
+from lib.helpers import ValidatorMixin
+from datetime import datetime  # Add this import
 
-class Expense:
+class Expense(ValidatorMixin):
     """Model for expenses associated with an activity."""
 
     def __init__(self, activity_id, amount, description=None, date=None, category="General"):
         self.activity_id = activity_id
-        self.amount = amount
-        self.description = description or "No description provided."
-        self.date = date or "Today"
-        self.category = category
+        self.amount = self.validate_positive_number(amount)
+        self.description = self.validate_text(description or "No description provided.")
+        # Set default date to today’s date in MM-DD-YYYY if no date is provided
+        self.date = self.validate_date(date or datetime.now().strftime("%m-%d-%Y"))
+        self.category = self.validate_text(category)
+
+    @property
+    def amount(self):
+        return self._amount
+
+    @amount.setter
+    def amount(self, value):
+        self._amount = self.validate_positive_number(value)
+
+    @property
+    def category(self):
+        return self._category
+
+    @category.setter
+    def category(self, value):
+        self._category = self.validate_text(value)
 
     @classmethod
-    def create(cls, activity_id, amount, description=None, date=None, category="General"):
-        """Add a new expense to the database and return the new expense ID."""
-        CURSOR.execute(
+    def create_table(cls, cursor):
+        cursor.execute('''CREATE TABLE IF NOT EXISTS expenses (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            activity_id INTEGER NOT NULL,
+                            amount REAL NOT NULL CHECK(amount >= 0),
+                            description TEXT,
+                            date TEXT DEFAULT (date('now')),
+                            category TEXT NOT NULL CHECK(category <> ''),
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY(activity_id) REFERENCES activities(id) ON DELETE CASCADE
+                        )''')
+
+    @classmethod
+    def drop_table(cls, cursor):
+        cursor.execute("DROP TABLE IF EXISTS expenses")
+
+    @classmethod
+    def create(cls, cursor, activity_id, amount, description=None, date=None, category="General"):
+        # Apply validation and default date format
+        date = cls.validate_date(date or datetime.now().strftime("%m-%d-%Y"))
+        cursor.execute(
             "INSERT INTO expenses (activity_id, amount, description, date, category) VALUES (?, ?, ?, ?, ?)",
             (activity_id, amount, description, date, category)
         )
-        CONN.commit()
-        return CURSOR.lastrowid
+        cursor.connection.commit()
+        return cursor.lastrowid
 
     @classmethod
-    def get_by_activity(cls, activity_id):
-        """Retrieve all expenses associated with a specific activity as a list of dictionaries."""
-        CURSOR.execute("SELECT * FROM expenses WHERE activity_id = ?", (activity_id,))
-        rows = CURSOR.fetchall()
-        return [
-            {
-                "id": row[0],
-                "activity_id": row[1],
-                "amount": row[2],
-                "description": row[3],
-                "date": row[4],
-                "category": row[5],
-                "created_at": row[6]
-            } for row in rows
-        ]
+    def get_by_activity(cls, cursor, activity_id):
+        cursor.execute("SELECT * FROM expenses WHERE activity_id = ?", (activity_id,))
+        return cursor.fetchall()
 
     @classmethod
-    def find_by_id(cls, expense_id):
-        """Retrieve a specific expense by its ID as a dictionary."""
-        CURSOR.execute("SELECT * FROM expenses WHERE id = ?", (expense_id,))
-        row = CURSOR.fetchone()
-        if row:
-            return {
-                "id": row[0],
-                "activity_id": row[1],
-                "amount": row[2],
-                "description": row[3],
-                "date": row[4],
-                "category": row[5],
-                "created_at": row[6]
-            }
-        return None
-
-    @classmethod
-    def update(cls, expense_id, activity_id, amount, date, category, description):
-        """Update an existing expense in the database."""
-        CURSOR.execute(
-            """
-            UPDATE expenses 
-            SET activity_id = ?, amount = ?, date = ?, category = ?, description = ?
-            WHERE id = ?
-            """,
+    def update(cls, cursor, expense_id, activity_id, amount, date, category, description):
+        # Apply validation on date format
+        date = cls.validate_date(date)
+        cursor.execute(
+            "UPDATE expenses SET activity_id = ?, amount = ?, date = ?, category = ?, description = ? WHERE id = ?",
             (activity_id, amount, date, category, description, expense_id)
         )
-        CONN.commit()
-        return CURSOR.rowcount > 0  # Returns True if the update was successful
+        cursor.connection.commit()
+        return cursor.rowcount > 0
 
     @classmethod
-    def delete(cls, expense_id):
-        """Delete an expense from the database by its ID."""
-        CURSOR.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
-        CONN.commit()
-        return CURSOR.rowcount > 0  # Returns True if the deletion was successful
-
-
-
-
-
-
-
+    def delete(cls, cursor, expense_id):
+        cursor.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
+        cursor.connection.commit()
+        return cursor.rowcount > 0
 
 
