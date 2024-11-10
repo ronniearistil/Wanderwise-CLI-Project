@@ -6,48 +6,9 @@ class Expense:
     def __init__(self, activity_id, amount, description=None, date=None, category="General"):
         self.activity_id = activity_id
         self.amount = amount
-        self.description = description
-        self.date = date
+        self.description = description or "No description provided."
+        self.date = date or "Today"
         self.category = category
-
-    @property
-    def amount(self):
-        return self._amount
-
-    @amount.setter
-    def amount(self, value):
-        if value >= 0:
-            self._amount = value
-        else:
-            raise ValueError("Amount must be non-negative.")
-
-    @property
-    def category(self):
-        return self._category
-
-    @category.setter
-    def category(self, value):
-        if isinstance(value, str) and value.strip():
-            self._category = value
-        else:
-            raise ValueError("Category must be a non-empty string.")
-
-    @property
-    def description(self):
-        return self._description
-
-    @description.setter
-    def description(self, value):
-        self._description = value if value else "No description provided."
-
-    @property
-    def date(self):
-        return self._date
-
-    @date.setter
-    def date(self, value):
-        # Here we assume the date is a valid date string in "YYYY-MM-DD" format
-        self._date = value if value else "Today"
 
     @classmethod
     def create(cls, activity_id, amount, description=None, date=None, category="General"):
@@ -61,15 +22,37 @@ class Expense:
 
     @classmethod
     def get_by_activity(cls, activity_id):
-        """Retrieve all expenses associated with a specific activity."""
+        """Retrieve all expenses associated with a specific activity as a list of dictionaries."""
         CURSOR.execute("SELECT * FROM expenses WHERE activity_id = ?", (activity_id,))
-        return CURSOR.fetchall()
+        rows = CURSOR.fetchall()
+        return [
+            {
+                "id": row[0],
+                "activity_id": row[1],
+                "amount": row[2],
+                "description": row[3],
+                "date": row[4],
+                "category": row[5],
+                "created_at": row[6]
+            } for row in rows
+        ]
 
     @classmethod
     def find_by_id(cls, expense_id):
-        """Retrieve a specific expense by its ID."""
+        """Retrieve a specific expense by its ID as a dictionary."""
         CURSOR.execute("SELECT * FROM expenses WHERE id = ?", (expense_id,))
-        return CURSOR.fetchone()
+        row = CURSOR.fetchone()
+        if row:
+            return {
+                "id": row[0],
+                "activity_id": row[1],
+                "amount": row[2],
+                "description": row[3],
+                "date": row[4],
+                "category": row[5],
+                "created_at": row[6]
+            }
+        return None
 
     @classmethod
     def update(cls, expense_id, activity_id, amount, date, category, description):
@@ -91,6 +74,7 @@ class Expense:
         CURSOR.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
         CONN.commit()
         return CURSOR.rowcount > 0  # Returns True if the deletion was successful
+
 
 
 

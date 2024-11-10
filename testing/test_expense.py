@@ -46,7 +46,7 @@ class TestExpense(unittest.TestCase):
         self.assertTrue(updated, "Failed to update expense")
 
         expense = Expense.find_by_id(expense_id)
-        self.assertEqual(expense[4], "Evening event", "Expense description did not update correctly")
+        self.assertEqual(expense["description"], "Evening event", "Expense description did not update correctly")
 
     def test_delete_expense(self):
         expense_id = Expense.create(self.activity_id, 100.0, "2023-11-10", "Travel", "Ticket fee")
@@ -58,4 +58,5 @@ class TestExpense(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
