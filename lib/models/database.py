@@ -22,7 +22,7 @@ def initialize_database(reset=False):
         Activity.drop_table(CURSOR)
         Expense.drop_table(CURSOR)
 
-    # Create tables for each model
+    # Create tables for each model/Class
     User.create_table(CURSOR)
     Destination.create_table(CURSOR)
     Activity.create_table(CURSOR)

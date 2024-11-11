@@ -1,6 +1,6 @@
 # helpers.py
-
 import re
+from datetime import datetime
 
 class ValidatorMixin:
     """Mixin class providing reusable validation methods."""
@@ -32,5 +32,12 @@ class ValidatorMixin:
         if re.match(r"[^@]+@[^@]+\.[^@]+", email):
             return email
         raise ValueError("Invalid email format.")
+
+# Function to reformat date strings
+def format_date(date_str):
+    """Convert a date string from 'YYYY-MM-DD' to 'MM-DD-YYYY'."""
+    date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+    return date_obj.strftime("%m-%d-%Y")
+
 
 
