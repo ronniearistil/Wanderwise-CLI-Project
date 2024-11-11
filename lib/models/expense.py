@@ -1,6 +1,6 @@
 from lib.models.database import CURSOR, CONN
 from lib.helpers import ValidatorMixin
-from datetime import datetime  # Add this import
+from datetime import datetime
 
 class Expense(ValidatorMixin):
     """Model for expenses associated with an activity."""
@@ -9,7 +9,6 @@ class Expense(ValidatorMixin):
         self.activity_id = activity_id
         self.amount = self.validate_positive_number(amount)
         self.description = self.validate_text(description or "No description provided.")
-        # Set default date to today’s date in MM-DD-YYYY if no date is provided
         self.date = self.validate_date(date or datetime.now().strftime("%m-%d-%Y"))
         self.category = self.validate_text(category)
 
@@ -48,7 +47,6 @@ class Expense(ValidatorMixin):
 
     @classmethod
     def create(cls, cursor, activity_id, amount, description=None, date=None, category="General"):
-        # Apply validation and default date format
         date = cls.validate_date(date or datetime.now().strftime("%m-%d-%Y"))
         cursor.execute(
             "INSERT INTO expenses (activity_id, amount, description, date, category) VALUES (?, ?, ?, ?, ?)",
@@ -58,13 +56,18 @@ class Expense(ValidatorMixin):
         return cursor.lastrowid
 
     @classmethod
+    def get_all(cls, cursor):
+        cursor.execute("SELECT * FROM expenses")
+        return cursor.fetchall()
+
+    @classmethod
     def get_by_activity(cls, cursor, activity_id):
+        """Retrieve all expenses associated with a specific activity ID."""
         cursor.execute("SELECT * FROM expenses WHERE activity_id = ?", (activity_id,))
         return cursor.fetchall()
 
     @classmethod
     def update(cls, cursor, expense_id, activity_id, amount, date, category, description):
-        # Apply validation on date format
         date = cls.validate_date(date)
         cursor.execute(
             "UPDATE expenses SET activity_id = ?, amount = ?, date = ?, category = ?, description = ? WHERE id = ?",
@@ -78,5 +81,7 @@ class Expense(ValidatorMixin):
         cursor.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
         cursor.connection.commit()
         return cursor.rowcount > 0
+
+
 
 
