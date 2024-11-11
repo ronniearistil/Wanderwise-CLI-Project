@@ -5,7 +5,7 @@ from lib.models.destination import Destination
 from lib.models.activity import Activity
 from lib.models.expense import Expense
 from lib.models.user import User
-from lib.helpers import ValidatorMixin
+from lib.helpers import ValidatorMixin, format_date  # Import format_date function
 
 # Initialize Rich console for enhanced CLI output
 console = Console()
@@ -17,7 +17,6 @@ def prompt_input(prompt_text, input_type=str, validator=None):
     while True:
         response = click.prompt(f"{prompt_text} (or 'e' to exit, 'b' to go back)", type=input_type)
         
-        # Handle exit and back options
         if str(response).lower() == 'e':
             console.print("[bold red]Exiting...[/bold red]")
             raise SystemExit
@@ -92,7 +91,7 @@ def add_user():
         email = prompt_input("Enter user email", validator=ValidatorMixin.validate_text)
         if email == 'b':
             return
-        User.create(name, email)
+        User.create(CURSOR, name, email)
         console.print(f"[green]User '{name}' added successfully.[/green]")
     except click.exceptions.Exit:
         console.print("[yellow]Returned to main menu.[/yellow]")
@@ -111,12 +110,11 @@ def add_destination():
         if description == 'b':
             return
 
-        # Check if the destination already exists
         existing_destination = Destination.find_by_name_and_location(name, location)
         if existing_destination:
             console.print(f"[yellow]Destination '{name}' in '{location}' already exists.[/yellow]")
         else:
-            Destination.create(name, location, description)
+            Destination.create(CURSOR, name, location, description)
             console.print(f"[green]Destination '{name}' added successfully.[/green]")
     except click.exceptions.Exit:
         console.print("[yellow]Returned to main menu.[/yellow]")
@@ -132,7 +130,7 @@ def add_activity():
         name = prompt_input("Enter activity name", validator=ValidatorMixin.validate_text)
         if name == 'b':
             return
-        date = prompt_input("Enter date (YYYY-MM-DD)", validator=ValidatorMixin.validate_date)
+        date = prompt_input("Enter date (MM-DD-YYYY)", validator=ValidatorMixin.validate_date)
         if date == 'b':
             return
         time = prompt_input("Enter time")
@@ -145,7 +143,7 @@ def add_activity():
         if description == 'b':
             return
 
-        Activity.create(destination_id, name, date, time, cost, description)
+        Activity.create(CURSOR, destination_id, name, date, time, cost, description)
         console.print(f"[green]Activity '{name}' added successfully.[/green]")
     except click.exceptions.Exit:
         console.print("[yellow]Returned to main menu.[/yellow]")
@@ -166,16 +164,17 @@ def add_expense():
         description = prompt_input("Enter a short description", validator=ValidatorMixin.validate_text)
         if description == 'b':
             return
-        date = prompt_input("Enter date (YYYY-MM-DD)", validator=ValidatorMixin.validate_date)
+        date = prompt_input("Enter date (MM-DD-YYYY)", validator=ValidatorMixin.validate_date)
         if date == 'b':
             return
-        Expense.create(activity_id, amount, date, category, description)
+        Expense.create(CURSOR, activity_id, amount, date, category, description)
         console.print("[green]Expense added successfully.[/green]")
     except click.exceptions.Exit:
         console.print("[yellow]Returned to main menu.[/yellow]")
 
 if __name__ == "__main__":
     main_menu()
+
 
 
 

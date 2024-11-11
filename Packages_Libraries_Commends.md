@@ -63,7 +63,3 @@ pytest
 ## Run Seeds File
 python seeds.py
 
-
-ValidatorMixin.validate_text() – Ensures text input is valid.
-ValidatorMixin.validate_positive_number() – Ensures the number is positive.
-ValidatorMixin.validate_date() – Validates the date format as YYYY-MM-DD.
