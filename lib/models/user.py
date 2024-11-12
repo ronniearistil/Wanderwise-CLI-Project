@@ -1,67 +1,52 @@
-from lib.models.database import CURSOR, CONN
-from lib.helpers import ValidatorMixin
+from lib.base_model import BaseModel
 
-class User(ValidatorMixin):
+class User(BaseModel):
     """Model for a user in the Wanderwise application."""
-
-    def __init__(self, name, email):
-        # Use mixin validation methods
-        self.name = self.validate_text(name)
-        self.email = self.validate_email(email)
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = self.validate_text(value)
-
-    @property
-    def email(self):
-        return self._email
-
-    @name.setter
-    def email(self, value):
-        self._email = self.validate_email(value)
+    
+    CREATE_TABLE_SQL = '''CREATE TABLE IF NOT EXISTS users (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                name TEXT NOT NULL CHECK(name <> ''),
+                                email TEXT NOT NULL UNIQUE,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            )'''
 
     @classmethod
-    def create_table(cls, cursor):
-        cursor.execute('''CREATE TABLE IF NOT EXISTS users (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            name TEXT NOT NULL CHECK(name <> ''),
-                            email TEXT NOT NULL UNIQUE,
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        )''')
+    def create_table(cls):
+        cls.execute_create_table(cls.CREATE_TABLE_SQL)
 
     @classmethod
-    def drop_table(cls, cursor):
-        cursor.execute("DROP TABLE IF EXISTS users")
+    def drop_table(cls):
+        super().drop_table("users")
 
     @classmethod
-    def create(cls, cursor, name, email):
-        cursor.execute("INSERT INTO users (name, email) VALUES (?, ?)", (name, email))
-        cursor.connection.commit()
-        return cursor.lastrowid
+    def create(cls, name, email):
+        return super().create(
+            "INSERT INTO users (name, email) VALUES (?, ?)", (name, email)
+        )
 
     @classmethod
-    def get_all(cls, cursor):
-        cursor.execute("SELECT * FROM users")
-        return cursor.fetchall()
+    def get_all(cls):
+        return super().get_all("SELECT * FROM users")
 
     @classmethod
-    def find_by_id(cls, cursor, user_id):
-        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
-        return cursor.fetchone()
+    def find_by_id(cls, user_id):
+        return super().find_by_id("SELECT * FROM users WHERE id = ?", user_id)
 
     @classmethod
-    def update(cls, cursor, user_id, name, email):
-        cursor.execute("UPDATE users SET name = ?, email = ? WHERE id = ?", (name, email, user_id))
-        cursor.connection.commit()
-        return cursor.rowcount > 0
+    def update(cls, user_id, **kwargs):
+        columns = ', '.join([f"{k} = ?" for k in kwargs.keys()])
+        params = tuple(kwargs.values()) + (user_id,)
+        return super().update(f"UPDATE users SET {columns} WHERE id = ?", params)
 
     @classmethod
-    def delete(cls, cursor, user_id):
-        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
-        cursor.connection.commit()
-        return cursor.rowcount > 0
+    def delete(cls, user_id):
+        return super().delete("DELETE FROM users WHERE id = ?", user_id)
+
+
+
+
+
+
+
+
+

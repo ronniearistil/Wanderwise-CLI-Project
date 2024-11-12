@@ -61,5 +61,5 @@ Validator Methods (from ValidatorMixin in helpers.py)
 pytest
 
 ## Run Seeds File
-python seeds.py
+python seed.py
 

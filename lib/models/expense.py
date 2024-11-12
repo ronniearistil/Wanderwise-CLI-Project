@@ -1,86 +1,59 @@
-from lib.models.database import CURSOR, CONN
-from lib.helpers import ValidatorMixin
-from datetime import datetime
+from lib.base_model import BaseModel
 
-class Expense(ValidatorMixin):
-    """Model for expenses associated with an activity."""
+class Expense(BaseModel):
+    """Model for an expense in the Wanderwise application."""
 
-    def __init__(self, activity_id, amount, description=None, date=None, category="General"):
-        self.activity_id = activity_id
-        self.amount = self.validate_positive_number(amount)
-        self.description = self.validate_text(description or "No description provided.")
-        self.date = self.validate_date(date or datetime.now().strftime("%m-%d-%Y"))
-        self.category = self.validate_text(category)
-
-    @property
-    def amount(self):
-        return self._amount
-
-    @amount.setter
-    def amount(self, value):
-        self._amount = self.validate_positive_number(value)
-
-    @property
-    def category(self):
-        return self._category
-
-    @category.setter
-    def category(self, value):
-        self._category = self.validate_text(value)
-
-    @classmethod
-    def create_table(cls, cursor):
-        cursor.execute('''CREATE TABLE IF NOT EXISTS expenses (
+    CREATE_TABLE_SQL = '''CREATE TABLE IF NOT EXISTS expenses (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
                             activity_id INTEGER NOT NULL,
-                            amount REAL NOT NULL CHECK(amount >= 0),
+                            amount REAL NOT NULL,
+                            date TEXT NOT NULL,
+                            category TEXT NOT NULL,
                             description TEXT,
-                            date TEXT DEFAULT (date('now')),
-                            category TEXT NOT NULL CHECK(category <> ''),
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            FOREIGN KEY(activity_id) REFERENCES activities(id) ON DELETE CASCADE
-                        )''')
+                            FOREIGN KEY(activity_id) REFERENCES activities(id)
+                        )'''
 
     @classmethod
-    def drop_table(cls, cursor):
-        cursor.execute("DROP TABLE IF EXISTS expenses")
+    def create_table(cls):
+        cls.execute_create_table(cls.CREATE_TABLE_SQL)
 
     @classmethod
-    def create(cls, cursor, activity_id, amount, description=None, date=None, category="General"):
-        date = cls.validate_date(date or datetime.now().strftime("%m-%d-%Y"))
-        cursor.execute(
-            "INSERT INTO expenses (activity_id, amount, description, date, category) VALUES (?, ?, ?, ?, ?)",
-            (activity_id, amount, description, date, category)
+    def drop_table(cls):
+        super().drop_table("expenses")
+
+    @classmethod
+    def create(cls, activity_id, amount, date, category, description=None):
+        return super().create(
+            "INSERT INTO expenses (activity_id, amount, date, category, description) VALUES (?, ?, ?, ?, ?)",
+            (activity_id, amount, date, category, description)
         )
-        cursor.connection.commit()
-        return cursor.lastrowid
 
     @classmethod
-    def get_all(cls, cursor):
-        cursor.execute("SELECT * FROM expenses")
-        return cursor.fetchall()
+    def get_all(cls):
+        return super().get_all("SELECT * FROM expenses")
 
     @classmethod
-    def get_by_activity(cls, cursor, activity_id):
-        """Retrieve all expenses associated with a specific activity ID."""
-        cursor.execute("SELECT * FROM expenses WHERE activity_id = ?", (activity_id,))
-        return cursor.fetchall()
+    def get_by_activity(cls, activity_id):
+        return cls.get_by_column("SELECT * FROM expenses WHERE activity_id = ?", activity_id)
 
     @classmethod
-    def update(cls, cursor, expense_id, activity_id, amount, date, category, description):
-        date = cls.validate_date(date)
-        cursor.execute(
-            "UPDATE expenses SET activity_id = ?, amount = ?, date = ?, category = ?, description = ? WHERE id = ?",
-            (activity_id, amount, date, category, description, expense_id)
-        )
-        cursor.connection.commit()
-        return cursor.rowcount > 0
+    def find_by_id(cls, expense_id):
+        """Retrieve a specific expense by its ID."""
+        return super().find_by_id("SELECT * FROM expenses WHERE id = ?", expense_id)
 
     @classmethod
-    def delete(cls, cursor, expense_id):
-        cursor.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
-        cursor.connection.commit()
-        return cursor.rowcount > 0
+    def update(cls, expense_id, **kwargs):
+        columns = ', '.join([f"{k} = ?" for k in kwargs.keys()])
+        params = tuple(kwargs.values()) + (expense_id,)
+        return super().update(f"UPDATE expenses SET {columns} WHERE id = ?", params)
+
+    @classmethod
+    def delete(cls, expense_id):
+        return super().delete("DELETE FROM expenses WHERE id = ?", expense_id)
+
+
+
+
 
 
 

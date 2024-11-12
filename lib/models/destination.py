@@ -1,13 +1,9 @@
-# destination.py
+from lib.base_model import BaseModel
 
-from lib.models.database import CURSOR, CONN
-
-class Destination:
+class Destination(BaseModel):
     """Model for a travel destination."""
 
-    @classmethod
-    def create_table(cls, cursor):
-        cursor.execute('''CREATE TABLE IF NOT EXISTS destinations (
+    CREATE_TABLE_SQL = '''CREATE TABLE IF NOT EXISTS destinations (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
                             name TEXT NOT NULL CHECK(name <> ''),
                             location TEXT NOT NULL CHECK(location <> ''),
@@ -15,27 +11,44 @@ class Destination:
                             user_id INTEGER,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-                        )''')
+                        )'''
 
     @classmethod
-    def drop_table(cls, cursor):
-        cursor.execute("DROP TABLE IF EXISTS destinations")
+    def create_table(cls):
+        cls.execute_create_table(cls.CREATE_TABLE_SQL)
 
     @classmethod
-    def create(cls, cursor, name, location, description, user_id):
-        """Insert a new destination into the database."""
-        cursor.execute(
+    def drop_table(cls):
+        super().drop_table("destinations")
+
+    @classmethod
+    def create(cls, name, location, description, user_id):
+        return super().create(
             "INSERT INTO destinations (name, location, description, user_id) VALUES (?, ?, ?, ?)",
             (name, location, description, user_id)
         )
-        cursor.connection.commit()
-        return cursor.lastrowid
 
     @classmethod
-    def get_all(cls, cursor):
-        """Retrieve all destinations from the database."""
-        cursor.execute("SELECT * FROM destinations")
-        return cursor.fetchall()
+    def get_all(cls):
+        return super().get_all("SELECT * FROM destinations")
+
+    @classmethod
+    def find_by_id(cls, destination_id):
+        return super().find_by_id("SELECT * FROM destinations WHERE id = ?", destination_id)
+
+    @classmethod
+    def update(cls, destination_id, **kwargs):
+        """Update a destination with specified fields."""
+        columns = ', '.join([f"{k} = ?" for k in kwargs.keys()])
+        params = tuple(kwargs.values()) + (destination_id,)
+        return super().update(f"UPDATE destinations SET {columns} WHERE id = ?", params)
+
+    @classmethod
+    def delete(cls, destination_id):
+        return super().delete("DELETE FROM destinations WHERE id = ?", destination_id)
+
+
+
 
 
 

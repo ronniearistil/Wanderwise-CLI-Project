@@ -1,20 +1,9 @@
-from lib.models.database import CURSOR, CONN  # Only import the database connection
+from lib.base_model import BaseModel
 
-class Activity:
+class Activity(BaseModel):
     """Model for an activity associated with a destination."""
 
-    def __init__(self, destination_id, name, date=None, time=None, cost=0, description=""):
-        self.destination_id = destination_id
-        self.name = name
-        self.date = date or "Today"
-        self.time = time or "00:00"
-        self.cost = cost
-        self.description = description
-
-    @classmethod
-    def create_table(cls, cursor):
-        """Create the activities table if it doesn't exist."""
-        cursor.execute('''CREATE TABLE IF NOT EXISTS activities (
+    CREATE_TABLE_SQL = '''CREATE TABLE IF NOT EXISTS activities (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
                             destination_id INTEGER NOT NULL,
                             name TEXT NOT NULL CHECK(name <> ''),
@@ -24,27 +13,47 @@ class Activity:
                             description TEXT,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             FOREIGN KEY(destination_id) REFERENCES destinations(id) ON DELETE CASCADE
-                        )''')
+                        )'''
 
     @classmethod
-    def drop_table(cls, cursor):
-        """Drop the activities table if it exists."""
-        cursor.execute("DROP TABLE IF EXISTS activities")
+    def create_table(cls):
+        cls.execute_create_table(cls.CREATE_TABLE_SQL)
 
     @classmethod
-    def create(cls, cursor, destination_id, name, date=None, time=None, cost=0, description=""):
-        """Insert a new activity into the database."""
-        cursor.execute(
+    def drop_table(cls):
+        super().drop_table("activities")
+
+    @classmethod
+    def create(cls, destination_id, name, date=None, time=None, cost=0, description=""):
+        return super().create(
             "INSERT INTO activities (destination_id, name, date, time, cost, description) VALUES (?, ?, ?, ?, ?, ?)",
             (destination_id, name, date, time, cost, description)
         )
-        cursor.connection.commit()
-        return cursor.lastrowid
 
     @classmethod
-    def get_by_destination(cls, cursor, destination_id):
-        """Retrieve all activities associated with a specific destination."""
-        cursor.execute("SELECT * FROM activities WHERE destination_id = ?", (destination_id,))
-        return cursor.fetchall()
+    def get_all(cls):
+        # Provide default SQL query for retrieving all activities
+        return super().get_all("SELECT * FROM activities")
+
+    @classmethod
+    def get_by_destination(cls, destination_id):
+        return cls.get_by_column("SELECT * FROM activities WHERE destination_id = ?", destination_id)
+
+    @classmethod
+    def find_by_id(cls, activity_id):
+        return super().find_by_id("SELECT * FROM activities WHERE id = ?", activity_id)
+
+    @classmethod
+    def update(cls, activity_id, **kwargs):
+        columns = ', '.join([f"{k} = ?" for k in kwargs.keys()])
+        params = tuple(kwargs.values()) + (activity_id,)
+        return super().update(f"UPDATE activities SET {columns} WHERE id = ?", params)
+
+    @classmethod
+    def delete(cls, activity_id):
+        return super().delete("DELETE FROM activities WHERE id = ?", activity_id)
+
+
+
 
 
