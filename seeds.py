@@ -1,5 +1,4 @@
 # seeds.py
-
 from faker import Faker
 from lib.models import Destination, Activity, Expense, User, CONN, CURSOR
 import random

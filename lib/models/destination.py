@@ -1,11 +1,15 @@
+import sqlite3
 from lib.models.database import CURSOR, CONN
 
 class Destination:
-    
+
+    all = []
+   
     def __init__(self, name, location, description, id=None):
         self.name = name
         self.location = location
         self.description = description
+        type(self).all.append(self)
 
     @property
     def name(self):
@@ -57,11 +61,15 @@ class Destination:
         else:
             self._user_id = user_id
 
+
     """Model for a travel destination."""
 
+    # Inserts a new row into the destinations table using values for name, location, description, and user_id.
+    # Commits the transaction to save changes.
+    # Returns the ID of the newly inserted row for reference.
     @classmethod
     def create(cls, name, location, description, user_id):
-        """Insert a new destination into the database."""
+        """Insert a new destination/row into the database."""
         CURSOR.execute(
             "INSERT INTO destinations (name, location, description, user_id) VALUES (?, ?, ?, ?)", 
             (name, location, description, user_id)
@@ -69,16 +77,20 @@ class Destination:
         CONN.commit()
         return CURSOR.lastrowid  # Return the ID of the newly inserted destination
 
+
+    # Executes a SQL command to select all rows from the destinations table.
+    # Fetches and returns all rows as a list of tuples, where each tuple corresponds to a row. 
+    # This allows access to all records in the table.
     @classmethod
     def get_all(cls):
         """Retrieve all destinations from the database."""
         CURSOR.execute("SELECT * FROM destinations")
         return CURSOR.fetchall()
     
+
+    # Calls cls.get_all() to retrieve all destinations.
+    # Filters the list to include only destinations where the location attribute starts with the specified location string.
+    # Returns a new list containing only the destinations that match this condition.
     @classmethod
     def filter_by_location(cls, location):
         return [destination for destination in cls.get_all() if destination.location.upper().startswith(location.upper())]
-
-
-
-
