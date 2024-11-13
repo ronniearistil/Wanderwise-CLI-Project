@@ -7,9 +7,8 @@ class User(ValidatorMixin):
     """Model for a user in the Wanderwise application."""
 
     def __init__(self, name, email, created_at=None, id=None):
-        # Use mixin validation methods
-        self.name = self.validate_text(name)
-        self.email = self.validate_email(email)
+        self.name = name
+        self.email = email
         self.created_at = created_at or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.id = id
 

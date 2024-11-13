@@ -8,10 +8,10 @@ class Expense(ValidatorMixin):
     def __init__(self, activity_id, amount, description=None, date=None, category="General", id=None):
         self.id = id
         self.activity_id = activity_id
-        self.amount = self.validate_positive_number(amount)
+        self.amount = amount
         self.description = self.validate_text(description or "No description provided.")
         self.date = self.validate_date(date or datetime.now().strftime("%m-%d-%Y"))
-        self.category = self.validate_text(category)
+        self.category = category
 
     @property
     def amount(self):
@@ -112,5 +112,4 @@ class Expense(ValidatorMixin):
             cursor.connection.rollback()
             print(f"Error deleting expense: {e}")
             return False
-
 
