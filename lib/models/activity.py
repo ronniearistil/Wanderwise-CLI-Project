@@ -3,13 +3,19 @@ from lib.models.database import CURSOR, CONN  # Only import the database connect
 class Activity:
     """Model for an activity associated with a destination."""
 
+
     def __init__(self, destination_id, name, date=None, time=None, cost=0, description=""):
+        # Instance attributes
         self.destination_id = destination_id
         self.name = name
         self.date = date or "Today"
         self.time = time or "00:00"
         self.cost = cost
         self.description = description
+
+    # ********
+    # Class Methods
+    # ********
 
     @classmethod
     def create_table(cls, cursor):
@@ -31,25 +37,33 @@ class Activity:
         """Drop the activities table if it exists."""
         cursor.execute("DROP TABLE IF EXISTS activities")
 
+    
+    def delete(cls, cursor, activity_id):
+        cursor.execute("DELETE FROM activities WHERE id = ?", (activity_id))
+        cursor.connection.commit()
+        return cursor.rowcount > 0 
+        # This checks if the number of affected rows is greater than zero.
+
     @classmethod
-    def delete(cls, activity_id):
-        """Delete an activity from the database by its ID."""
-        # Check if the activity exists before attempting to delete
-        CURSOR.execute("SELECT id FROM activity WHERE id = ?", (activity_id,))
-        result = CURSOR.fetchone()
-        if result is None:
-            raise ValueError(f"Activity with ID {activity_id} does not exist")
+    def get_all(cls, cursor):
+        cursor.execute("SELECT * FROM activity")
+        return cursor.fetchall()
 
-        CURSOR.execute("DELETE FROM activity WHERE id = ?", (activity_id,))
-        CURSOR.connection.commit()  # Commit the deletion to the database
+    @classmethod
+    
+    def update(cls,cursor, name, date, time, cost, description):
+        cursor.execute(
+            "UPDATE activities SET = name=?, date=?, time=? cost=?, description=? "
+            (name, date, time, cost, description)   
+        )
+        CONN.commit()
 
-        # Optionally, remove the instance from the class's `all` list if it exists
-        cls.all = [activity for activity in cls.all if activity.id != activity_id]
+    
 
     # *******
     # PROPERTIES
     # *******
-
+    
     @property
     def name(self):
         return self._name
@@ -65,14 +79,22 @@ class Activity:
         self._name = value_to_validate  #Set the validated name
 
 
-    # @property
-    # def date(self):
-    #     return self._date
+    @property
+    def date(self):
+        return self._date
 
-    # @date.setter
-    # def date(self, date_validate):
-    #     if isinstance(date_validate, )
+    @date.setter
+    def date(self, date_validate):
+        self._date = date_validate
 
+    @property
+    def time(self):
+        return self._time
+
+    @time.setter
+    def time(self, time_validate):
+        self._time = time_validate
+        
 
     @property
     def cost(self):
@@ -86,7 +108,13 @@ class Activity:
             raise ValueError("cost cannot be negative")
         self._cost = value_cost    # Set the validated cost
 
-
+    @property
+    def description(self):
+        return self._description
+    
+    @description.setter
+    def description(self, description_value):
+        self._description = description_value
 
 
     @classmethod
@@ -106,3 +134,6 @@ class Activity:
         return cursor.fetchall()
 
 
+
+
+# activity1 = Activity(destination_id=1, name="Hiking", date="2024-12-01", time="08:00", cost=50, description="A morning hiking trip.")
