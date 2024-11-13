@@ -1,4 +1,4 @@
-from models.__init__ import CURSOR, CONN  # Only import the database connection
+from lib.models.__init__ import CURSOR, CONN  # Only import the database connection
 
 def initialize_database(reset=False):
     """

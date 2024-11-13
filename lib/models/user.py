@@ -1,5 +1,5 @@
-from models.__init__ import CURSOR, CONN
-from helpers import ValidatorMixin
+from lib.models.__init__ import CURSOR, CONN # Only import the database connection
+from lib.helpers import ValidatorMixin
 import ipdb
 
 class User(ValidatorMixin):

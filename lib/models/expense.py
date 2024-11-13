@@ -1,5 +1,5 @@
-from models.__init__ import CURSOR, CONN
-from helpers import ValidatorMixin
+from lib.models.__init__ import CURSOR, CONN
+from lib.helpers import ValidatorMixin
 from datetime import datetime
 
 class Expense(ValidatorMixin):
