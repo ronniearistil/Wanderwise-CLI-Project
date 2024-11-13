@@ -53,4 +53,5 @@ class BaseModel:
         return CURSOR.rowcount
 
 
-
+'''Purpose: Provides shared database operations for models.
+Connections: Inherited by all models, connecting directly to database_setup.'''

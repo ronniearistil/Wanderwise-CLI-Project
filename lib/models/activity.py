@@ -56,4 +56,10 @@ class Activity(BaseModel):
 
 
 
+    '''Purpose: Manages activity-related data with CRUD methods.
+Connections: Extends BaseModel for common database operations, and is linked to the Destination table via a foreign key.'''
+
+
+
+
 

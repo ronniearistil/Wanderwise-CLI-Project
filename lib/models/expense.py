@@ -53,8 +53,8 @@ class Expense(BaseModel):
 
 
 
-
-
+'''Purpose: Manages expense-related data with CRUD functionality.
+Connections: Extends base_model, with a foreign key link to Activity.'''
 
 
 

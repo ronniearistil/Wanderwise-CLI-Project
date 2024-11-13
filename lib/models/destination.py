@@ -48,10 +48,9 @@ class Destination(BaseModel):
         return super().delete("DELETE FROM destinations WHERE id = ?", destination_id)
 
 
-
-
-
-
+'''Purpose: Manages destination-related data with CRUD operations.
+Connections: Extends base_model for shared database methods, and includes 
+a foreign key relationship with User.'''
 
 
 

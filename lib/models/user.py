@@ -43,7 +43,8 @@ class User(BaseModel):
         return super().delete("DELETE FROM users WHERE id = ?", user_id)
 
 
-
+'''Purpose: Manages user-related data with CRUD functionality.
+Connections: Extends BaseModel and is linked to Destination.'''
 
 
 
