@@ -1,3 +1,5 @@
+# seeds.py
+
 from faker import Faker
 from lib.models import Destination, Activity, Expense, User, CONN, CURSOR
 import random
@@ -114,8 +116,3 @@ def seed_all():
 # Run seeding if executed directly
 if __name__ == "__main__":
     seed_all()
-
-
-
-
-
