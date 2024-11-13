@@ -51,10 +51,10 @@ class Activity:
 
     @classmethod
     
-    def update(cls,cursor, name, date, time, cost, description):
+    def update(cls, cursor, name, date, time, cost, description):
         cursor.execute(
-            "UPDATE activities SET = name=?, date=?, time=? cost=?, description=? "
-            (name, date, time, cost, description)   
+            "UPDATE activities SET = name=?, date=?, time=? cost=?, description=? WHERE id = ?",
+            (name, date, time, cost, description, id)   
         )
         CONN.commit()
 
@@ -98,15 +98,15 @@ class Activity:
 
     @property
     def cost(self):
-        return self._cost         
+        return self._cost
 
     @cost.setter
     def cost(self, value_cost):
-        if not isinstance(value_cost, int):
-            raise TypeError("cost must be an integeer")
-        elif not value_cost :
+        if not isinstance(value_cost, (int, float)):
+            raise TypeError("cost must be an integer or float")
+        elif value_cost < 0:
             raise ValueError("cost cannot be negative")
-        self._cost = value_cost    # Set the validated cost
+        self._cost = value_cost  # Set the validated cost
 
     @property
     def description(self):

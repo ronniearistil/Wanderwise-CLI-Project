@@ -5,8 +5,8 @@ from lib.models.destination import Destination
 from lib.models.activity import Activity
 from lib.models.expense import Expense
 from lib.models.user import User
-from lib.helpers import ValidatorMixin, format_date
-from lib.models.database import CURSOR, CONN
+from lib.helpers import ValidatorMixin
+from lib.models.database import CURSOR
 
 console = Console()
 

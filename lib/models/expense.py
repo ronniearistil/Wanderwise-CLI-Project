@@ -1,4 +1,4 @@
-;from lib.models.database import CURSOR, CONN
+from lib.models.database import CURSOR, CONN
 from lib.helpers import ValidatorMixin
 from datetime import datetime
 
