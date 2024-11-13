@@ -10,7 +10,7 @@ class ValidatorMixin:
         """Ensure the text is a non-empty string."""
         if isinstance(text, str) and len(text.strip()) > 0:
             return text
-        raise ValueError("Text must be a non-empty string.")
+        print("Text must be a non-empty string.")
 
     @staticmethod
     def validate_positive_number(value):
@@ -31,7 +31,7 @@ class ValidatorMixin:
         """Basic email validation."""
         if re.match(r"[^@]+@[^@]+\.[^@]+", email):
             return email
-        raise ValueError("Invalid email format.")
+        print ("Invalid email format.")
 
 # Function to reformat date strings
 def format_date(date_str):

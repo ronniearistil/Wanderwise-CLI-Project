@@ -19,6 +19,7 @@ A one-to-many relationship where one user can have multiple destinations. This r
 - Destinations → Activities:
 
  one-to-many relationship where each destination can have multiple activities. The destination_id foreign key in the Activities table establishes this link.
+ 
 - Activities → Expenses:
 
 Similarly, each activity can have multiple associated expenses, forming a one-to-many relationship. This relationship is represented by the activity_id foreign key in the Expenses table.

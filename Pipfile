@@ -4,11 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-ipdb = "*"
 faker = "*"
 click = "*"
 pytest = "*"
 rich = "*"
+ipdb = "*"
 
 [dev-packages]
 

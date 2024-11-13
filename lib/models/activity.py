@@ -1,4 +1,4 @@
-from lib.models.database import CURSOR, CONN  # Only import the database connection
+from models.__init__ import CURSOR, CONN  # Only import the database connection
 
 class Activity:
     """Model for an activity associated with a destination."""
@@ -25,6 +25,31 @@ class Activity:
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             FOREIGN KEY(destination_id) REFERENCES destinations(id) ON DELETE CASCADE
                         )''')
+    @property
+    def cost(self):
+        return self._cost         
+
+    @cost.setter
+    def cost(self, value_cost):
+        if not isinstance(value_cost, int):
+            raise TypeError("cost must be an integer")
+        elif not value_cost :
+            raise ValueError("cost cannot be negative")
+        self._cost = value_cost    # Set the validated cost
+        
+    @property
+    def name(self):
+        return self._name
+    
+    @name.setter
+    def name(self, value_to_validate):
+        if not isinstance(value_to_validate, str):
+            raise TypeError("name must be a string")
+        elif len(value_to_validate) not in range(2, 50):
+            raise ValueError("name must be in between 2 and 50 characters")
+        elif hasattr(self, "_name"):
+            raise AttributeError("name cannot be initialized")
+        self._name = value_to_validate  #Set the validated name
 
     @classmethod
     def drop_table(cls, cursor):
@@ -46,49 +71,6 @@ class Activity:
         # Optionally, remove the instance from the class's `all` list if it exists
         cls.all = [activity for activity in cls.all if activity.id != activity_id]
 
-    # *******
-    # PROPERTIES
-    # *******
-
-    @property
-    def name(self):
-        return self._name
-    
-    @name.setter
-    def name(self, value_to_validate):
-        if not isinstance(value_to_validate, str):
-            raise TypeError("name must be a string")
-        elif len(value_to_validate) not in range(2, 50):
-            raise ValueError("name must be in between 2 and 50 characters")
-        elif hasattr(self, "_name"):
-            raise AttributeError("name cannot be initialized")
-        self._name = value_to_validate  #Set the validated name
-
-
-    # @property
-    # def date(self):
-    #     return self._date
-
-    # @date.setter
-    # def date(self, date_validate):
-    #     if isinstance(date_validate, )
-
-
-    @property
-    def cost(self):
-        return self._cost         
-
-    @cost.setter
-    def cost(self, value_cost):
-        if not isinstance(value_cost, int):
-            raise TypeError("cost must be an integeer")
-        elif not value_cost :
-            raise ValueError("cost cannot be negative")
-        self._cost = value_cost    # Set the validated cost
-
-
-
-
     @classmethod
     def create(cls, cursor, destination_id, name, date=None, time=None, cost=0, description=""):
         """Insert a new activity into the database."""
@@ -104,5 +86,3 @@ class Activity:
         """Retrieve all activities associated with a specific destination."""
         cursor.execute("SELECT * FROM activities WHERE destination_id = ?", (destination_id,))
         return cursor.fetchall()
-
-

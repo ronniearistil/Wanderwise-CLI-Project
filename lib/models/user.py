@@ -1,13 +1,16 @@
-from lib.models.database import CURSOR, CONN
-from lib.helpers import ValidatorMixin
+from models.__init__ import CURSOR, CONN
+from helpers import ValidatorMixin
+import ipdb
 
 class User(ValidatorMixin):
     """Model for a user in the Wanderwise application."""
 
-    def __init__(self, name, email):
+    def __init__(self, name, email, created_at, id =None):
         # Use mixin validation methods
-        self.name = self.validate_text(name)
-        self.email = self.validate_email(email)
+        self.name = name
+        self.email = email
+        self.created_at = created_at
+        self.id = id
 
     @property
     def name(self):
@@ -47,12 +50,15 @@ class User(ValidatorMixin):
     @classmethod
     def get_all(cls, cursor):
         cursor.execute("SELECT * FROM users")
-        return cursor.fetchall()
+        data = cursor.fetchall()
+        return [cls(row[1], row[2], row[3], row[0] ) for row in data]
 
     @classmethod
     def find_by_id(cls, cursor, user_id):
         cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
-        return cursor.fetchone()
+        data = cursor.fetchone()
+        return  cls(data[1], data[2], data[3], data[0] )
+    
 
     @classmethod
     def update(cls, cursor, user_id, name, email):
@@ -65,3 +71,15 @@ class User(ValidatorMixin):
         cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
         cursor.connection.commit()
         return cursor.rowcount > 0
+    
+    def destinations(self):
+        '''Select all destinations by user'''
+        from models.destination import Destination
+        query = CURSOR.execute('SELECT * FROM destinations WHERE user_id =?', (self.id,))
+        data =query.fetchall()
+        return[Destination.instance_from_db(row) for row in data]
+        
+
+# def destinations(self):
+        # from destination import Destination
+#         return[destination for destination in Destination.get_all() if destination.user is self] 

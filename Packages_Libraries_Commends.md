@@ -63,3 +63,6 @@ pytest
 ## Run Seeds File
 python seeds.py
 
+## Activity Commands:
+python cli.py 
+
