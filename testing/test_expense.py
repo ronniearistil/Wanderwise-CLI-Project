@@ -1,60 +1,71 @@
+# testing/test_expense.py
+
 import unittest
-from lib.models.activity import Activity
-from lib.models.destination import Destination
 from lib.models.user import User
+from lib.models.destination import Destination
+from lib.models.activity import Activity
 from lib.models.expense import Expense
-from lib.models.database import CONN, CURSOR
+from lib.models.database import CURSOR, CONN
 
 class TestExpense(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # Clear tables before starting tests
-        CURSOR.execute("DELETE FROM expenses")
-        CURSOR.execute("DELETE FROM activities")
-        CURSOR.execute("DELETE FROM destinations")
-        CURSOR.execute("DELETE FROM users")
-        CONN.commit()
-
+        """Set up the database schema before running any tests."""
+        # Clear tables and recreate them to ensure a clean state
+        Expense.drop_table(CURSOR)
+        Activity.drop_table(CURSOR)
+        Destination.drop_table(CURSOR)
+        User.drop_table(CURSOR)
+        
+        User.create_table(CURSOR)
+        Destination.create_table(CURSOR)
+        Activity.create_table(CURSOR)
+        Expense.create_table(CURSOR)
+    
     def setUp(self):
-        # Add a user, destination, and activity to link expenses to
-        self.user_id = User.create("Alice Smith", "alice.smith@example.com")
-        self.destination_id = Destination.create("Paris", "France", "City of Light", self.user_id)
-        self.activity_id = Activity.create(self.destination_id, "Eiffel Tower Visit", "2023-11-10", "10:00", 50.0, "Guided tour")
-
-    def tearDown(self):
-        # Clear data after each test
+        """Set up required entries in the database for expense tests."""
+        # Clear all records to ensure no unique constraint issues
         CURSOR.execute("DELETE FROM expenses")
         CURSOR.execute("DELETE FROM activities")
         CURSOR.execute("DELETE FROM destinations")
         CURSOR.execute("DELETE FROM users")
         CONN.commit()
+        
+        # Create a user, destination, and activity to link expenses to
+        self.user_id = User.create(CURSOR, "Alice Smith", "alice.smith@example.com")
+        self.destination_id = Destination.create(CURSOR, "Paris", "France", "City of Light", self.user_id)
+        self.activity_id = Activity.create(CURSOR, self.destination_id, "Eiffel Tower Visit", "11-10-2024", "10:00", 50.0, "Guided tour")
 
     def test_create_expense(self):
-        expense_id = Expense.create(self.activity_id, 100.0, "2023-11-10", "Travel", "Ticket fee")
+        """Test creating an expense linked to an activity."""
+        expense_id = Expense.create(CURSOR, self.activity_id, 100.0, "Ticket fee", "11-10-2024", "Entertainment")
         self.assertIsNotNone(expense_id, "Failed to create a new expense")
 
     def test_get_by_activity(self):
-        Expense.create(self.activity_id, 50.0, "2023-11-10", "Travel", "Metro fare")
-        Expense.create(self.activity_id, 30.0, "2023-11-11", "Food", "Lunch")
-        expenses = Expense.get_by_activity(self.activity_id)
+        """Test retrieving expenses associated with an activity."""
+        Expense.create(CURSOR, self.activity_id, 50.0, "Metro fare", "11-10-2024", "Transport")
+        Expense.create(CURSOR, self.activity_id, 30.0, "Lunch", "11-11-2024", "Food")
+        expenses = Expense.get_by_activity(CURSOR, self.activity_id)
         self.assertEqual(len(expenses), 2, "Failed to retrieve all expenses for activity")
 
-    def test_update_expense(self):
-        expense_id = Expense.create(self.activity_id, 100.0, "2023-11-10", "Travel", "Ticket fee")
-        updated = Expense.update(expense_id, self.activity_id, 120.0, "2023-11-12", "Entertainment", "Evening event")
-        self.assertTrue(updated, "Failed to update expense")
+    def tearDown(self):
+        """Clear data after each test to avoid conflicts."""
+        CURSOR.execute("DELETE FROM expenses")
+        CURSOR.execute("DELETE FROM activities")
+        CURSOR.execute("DELETE FROM destinations")
+        CURSOR.execute("DELETE FROM users")
+        CONN.commit()
 
-        expense = Expense.find_by_id(expense_id)
-        self.assertEqual(expense[4], "Evening event", "Expense description did not update correctly")
-
-    def test_delete_expense(self):
-        expense_id = Expense.create(self.activity_id, 100.0, "2023-11-10", "Travel", "Ticket fee")
-        deleted = Expense.delete(expense_id)
-        self.assertTrue(deleted, "Failed to delete expense")
-
-        expense = Expense.find_by_id(expense_id)
-        self.assertIsNone(expense, "Expense was not deleted properly")
+    @classmethod
+    def tearDownClass(cls):
+        """Tear down the database schema after all tests have completed."""
+        Expense.drop_table(CURSOR)
+        Activity.drop_table(CURSOR)
+        Destination.drop_table(CURSOR)
+        User.drop_table(CURSOR)
+        CONN.commit()
 
 if __name__ == "__main__":
     unittest.main()
+

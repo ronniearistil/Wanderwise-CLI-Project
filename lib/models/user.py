@@ -1,71 +1,85 @@
-from lib.models.database import CURSOR, CONN
+from models.__init__ import CURSOR, CONN
+from helpers import ValidatorMixin
+import ipdb
 
-class User:
+class User(ValidatorMixin):
     """Model for a user in the Wanderwise application."""
 
-    def __init__(self, name, email):
-        """Initialize a new User instance with name and email."""
+    def __init__(self, name, email, created_at, id =None):
+        # Use mixin validation methods
         self.name = name
         self.email = email
+        self.created_at = created_at
+        self.id = id
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = self.validate_text(value)
+
+    @property
+    def email(self):
+        return self._email
+
+    @name.setter
+    def email(self, value):
+        self._email = self.validate_email(value)
 
     @classmethod
-    def create(cls, name, email):
-        """
-        Create a new user in the database.
-        
-        :param name: The name of the user.
-        :param email: The email of the user.
-        :return: The ID of the newly created user.
-        """
-        CURSOR.execute("INSERT INTO users (name, email) VALUES (?, ?)", (name, email))
-        CONN.commit()
-        return CURSOR.lastrowid
+    def create_table(cls, cursor):
+        cursor.execute('''CREATE TABLE IF NOT EXISTS users (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            name TEXT NOT NULL CHECK(name <> ''),
+                            email TEXT NOT NULL UNIQUE,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )''')
 
     @classmethod
-    def get_all(cls):
-        """
-        Retrieve all users from the database.
-        
-        :return: A list of all users as tuples.
-        """
-        CURSOR.execute("SELECT * FROM users")
-        return CURSOR.fetchall()
+    def drop_table(cls, cursor):
+        cursor.execute("DROP TABLE IF EXISTS users")
 
     @classmethod
-    def find_by_id(cls, user_id):
-        """
-        Find a user by their ID.
-        
-        :param user_id: The ID of the user to retrieve.
-        :return: The user record as a tuple if found, otherwise None.
-        """
-        CURSOR.execute("SELECT * FROM users WHERE id = ?", (user_id,))
-        return CURSOR.fetchone()
+    def create(cls, cursor, name, email):
+        cursor.execute("INSERT INTO users (name, email) VALUES (?, ?)", (name, email))
+        cursor.connection.commit()
+        return cursor.lastrowid
 
     @classmethod
-    def update(cls, user_id, name, email):
-        """
-        Update an existing user's name and email in the database.
-        
-        :param user_id: The ID of the user to update.
-        :param name: The new name of the user.
-        :param email: The new email of the user.
-        :return: True if the user was updated, False otherwise.
-        """
-        CURSOR.execute("UPDATE users SET name = ?, email = ? WHERE id = ?", (name, email, user_id))
-        CONN.commit()
-        return CURSOR.rowcount > 0
+    def get_all(cls, cursor):
+        cursor.execute("SELECT * FROM users")
+        data = cursor.fetchall()
+        return [cls(row[1], row[2], row[3], row[0] ) for row in data]
 
     @classmethod
-    def delete(cls, user_id):
-        """
-        Delete a user from the database by their ID.
+    def find_by_id(cls, cursor, user_id):
+        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        data = cursor.fetchone()
+        return  cls(data[1], data[2], data[3], data[0] )
+    
+
+    @classmethod
+    def update(cls, cursor, user_id, name, email):
+        cursor.execute("UPDATE users SET name = ?, email = ? WHERE id = ?", (name, email, user_id))
+        cursor.connection.commit()
+        return cursor.rowcount > 0
+
+    @classmethod
+    def delete(cls, cursor, user_id):
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        cursor.connection.commit()
+        return cursor.rowcount > 0
+    
+    def destinations(self):
+        '''Select all destinations by user'''
+        from models.destination import Destination
+        query = CURSOR.execute('SELECT * FROM destinations WHERE user_id =?', (self.id,))
+        data =query.fetchall()
+        return[Destination.instance_from_db(row) for row in data]
         
-        :param user_id: The ID of the user to delete.
-        :return: True if the user was deleted, False otherwise.
-        """
-        CURSOR.execute("DELETE FROM users WHERE id = ?", (user_id,))
-        CONN.commit()
-        return CURSOR.rowcount > 0
 
-
+# def destinations(self):
+        # from destination import Destination
+#         return[destination for destination in Destination.get_all() if destination.user is self] 
