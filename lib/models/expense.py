@@ -1,6 +1,7 @@
 from lib.models.__init__ import CURSOR, CONN
 from lib.helpers import ValidatorMixin
 from datetime import datetime
+import ipdb
 
 class Expense(ValidatorMixin):
     """Model for expenses associated with an activity."""
@@ -102,6 +103,9 @@ class Expense(ValidatorMixin):
             return False
 
 
+# Simple instance of Expense for testing
+expense1 = Expense(activity_id=1, amount=200, description="Lunch expense", date="12-01-2024", category="Food")
+ipdb.set_trace() 
 
 
 
