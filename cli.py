@@ -139,39 +139,57 @@ def add_entry(model, fields):
     Add a new entry for a specified model using field prompts.
     """
     data = {key: prompt_input(label, optional=True) for key, label in fields.items()}
-    model.create(**data)
-    console.print(f"[green]{model.__name__} added successfully.[/green]")
+    try:
+        if hasattr(model, 'create') and callable(getattr(model, 'create')):
+            model.create(**data)
+            console.print(f"[green]{model.__name__} added successfully.[/green]")
+        else:
+            console.print(f"[red]Error: {model.__name__} does not support direct creation with 'create' method.[/red]")
+    except Exception as e:
+        console.print(f"[red]Error adding {model.__name__}: {e}[/red]")
 
 def view_entries(model, name):
     """
     Display all entries for a specified model in a table format.
     """
-    entries = model.get_all()
-    if entries:
-        table = Table(title=f"{name}s")
-        column_names = [desc[0] for desc in CURSOR.description]
-        for col_name in column_names:
-            table.add_column(col_name.capitalize(), justify="left")
-        for entry in entries:
-            table.add_row(*map(str, entry))
-        console.print(table)
-    else:
-        console.print(f"[yellow]No {name.lower()}s found.[/yellow]")
+    try:
+        if hasattr(model, 'get_all') and callable(getattr(model, 'get_all')):
+            entries = model.get_all()
+            if entries:
+                table = Table(title=f"{name}s")
+                column_names = [desc[0] for desc in CURSOR.description]
+                for col_name in column_names:
+                    table.add_column(col_name.capitalize(), justify="left")
+                for entry in entries:
+                    table.add_row(*map(str, entry))
+                console.print(table)
+            else:
+                console.print(f"[yellow]No {name.lower()}s found.[/yellow]")
+        else:
+            console.print(f"[red]Error: {model.__name__} does not support retrieval with 'get_all' method.[/red]")
+    except Exception as e:
+        console.print(f"[red]Error retrieving {name} records: {e}[/red]")
 
 def edit_entry(model, name, fields):
     """
     Edit an existing entry by ID with the option to update specific fields.
     """
     entry_id = prompt_input(f"Enter {name.lower()} ID to edit", int)
-    existing_entry = model.find_by_id(entry_id)
-    if not existing_entry:
-        console.print(f"[red]{name} ID '{entry_id}' not found.[/red]")
-        return
+    try:
+        if hasattr(model, 'find_by_id') and callable(getattr(model, 'find_by_id')) and hasattr(model, 'update') and callable(getattr(model, 'update')):
+            existing_entry = model.find_by_id(entry_id)
+            if not existing_entry:
+                console.print(f"[red]{name} ID '{entry_id}' not found.[/red]")
+                return
 
-    console.print("[yellow]Leave field empty to keep current value.[/yellow]")
-    updated_data = {key: prompt_input(f"{label} [Current: {existing_entry[i]}]", optional=True) for i, (key, label) in enumerate(fields.items())}
-    model.update(entry_id, **{k: v for k, v in updated_data.items() if v is not None})
-    console.print(f"[green]{name} ID '{entry_id}' updated successfully.[/green]")
+            console.print("[yellow]Leave field empty to keep current value.[/yellow]")
+            updated_data = {key: prompt_input(f"{label} [Current: {getattr(existing_entry, key, None)}]", optional=True) for key, label in fields.items()}
+            model.update(entry_id, **{k: v for k, v in updated_data.items() if v is not None})
+            console.print(f"[green]{name} ID '{entry_id}' updated successfully.[/green]")
+        else:
+            console.print(f"[red]Error: {model.__name__} does not support direct updating with 'update' method.[/red]")
+    except Exception as e:
+        console.print(f"[red]Error updating {model.__name__} ID '{entry_id}': {e}[/red]")
 
 def delete_entry(model, name):
     """
@@ -179,8 +197,14 @@ def delete_entry(model, name):
     """
     entry_id = prompt_input(f"Enter {name.lower()} ID to delete", int)
     if click.confirm(f"Are you sure you want to delete this {name.lower()}?"):
-        model.delete(entry_id)
-        console.print(f"[green]{name} ID '{entry_id}' deleted successfully.[/green]")
+        try:
+            if hasattr(model, 'delete') and callable(getattr(model, 'delete')):
+                model.delete(entry_id)
+                console.print(f"[green]{name} ID '{entry_id}' deleted successfully.[/green]")
+            else:
+                console.print(f"[red]Error: {model.__name__} does not support direct deletion with 'delete' method.[/red]")
+        except Exception as e:
+            console.print(f"[red]Error deleting {model.__name__} ID '{entry_id}': {e}[/red]")
 
 if __name__ == "__main__":
     main_menu()

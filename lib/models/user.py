@@ -61,16 +61,20 @@ class User(ValidatorMixin):
             CONN.rollback()
             print(f"Error dropping users table: {e}")
 
-    @classmethod
-    def create(cls, cursor, name, email):
-        try:
-            cursor.execute("INSERT INTO users (name, email) VALUES (?, ?)", (name, email))
-            cursor.connection.commit()
-            return cursor.lastrowid
-        except Exception as e:
-            CONN.rollback()
-            print(f"Error creating user: {e}")
-            return None
+@classmethod
+def create(cls, name, email):
+    """Create a new user entry in the database and return the User object."""
+    try:
+        sql = "INSERT INTO users (name, email) VALUES (?, ?)"
+        CURSOR.execute(sql, (name, email))
+        CONN.commit()
+        user_id = CURSOR.lastrowid
+        return cls(name, email, id=user_id)
+    except Exception as e:
+        CONN.rollback()
+        print("Error creating user:", e)
+        return None
+
 
     @classmethod
     def get_all(cls, cursor):
