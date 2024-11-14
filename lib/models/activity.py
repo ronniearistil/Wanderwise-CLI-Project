@@ -136,7 +136,7 @@ class Activity:
     
     @classmethod
     def filter_by_cost(cls, cost):
-         #"""Return a list of activities that have an exact cost match."""
+    #"""Return a list of activities that have an exact cost match."""
         return [activity for activity in cls.get_all() if activity.cost == cost]
         
     # def expenses(self):
