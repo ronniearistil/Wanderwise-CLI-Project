@@ -8,10 +8,10 @@ class Expense(ValidatorMixin):
     def __init__(self, activity_id, amount, description=None, date=None, category="General", id=None):
         self.id = id
         self.activity_id = activity_id
-        self.amount = amount
+        self.amount = self.validate_positive_number(amount)
         self.description = self.validate_text(description or "No description provided.")
         self.date = self.validate_date(date or datetime.now().strftime("%m-%d-%Y"))
-        self.category = category
+        self.category = self.validate_text(category)
 
     @property
     def amount(self):
@@ -112,4 +112,17 @@ class Expense(ValidatorMixin):
             cursor.connection.rollback()
             print(f"Error deleting expense: {e}")
             return False
+
+    def activity(self):
+        """Retrieve the activity linked to this expense from the database."""
+        from lib.models.activity import Activity
+        try:
+            query = CURSOR.execute('SELECT * FROM activities WHERE id = ?', (self.activity_id,))
+            data = query.fetchone()
+            return Activity.instance_from_db(data) if data else None
+        except Exception as e:
+            CONN.rollback()
+            print(f"Error retrieving activity for expense {self.id}: {e}")
+            return None
+
 
