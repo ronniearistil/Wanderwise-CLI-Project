@@ -3,14 +3,15 @@ from models.database import CURSOR, CONN  # Only import the database connection
 
 class Activity:
     """Model for an activity associated with a destination."""
+    all = {}
 
-
-    def __init__(self, destination_id, name, date=None, time=None, cost=0, description=""):
+    def __init__(self, name, date, time, cost, description, destination_id, id=None):
         # Instance attributes
-        self.destination_id = destination_id
+        self.id = id
         self.name = name
-        self.date = date or "Today"
-        self.time = time or "00:00"
+        self.destination_id = destination_id
+        self.date = date
+        self.time = time
         self.cost = cost
         self.description = description
 
@@ -19,49 +20,116 @@ class Activity:
     # ********
 
     @classmethod
-    def create_table(cls, cursor):
-        """Create the activities table if it doesn't exist."""
-        cursor.execute('''CREATE TABLE IF NOT EXISTS activities (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            destination_id INTEGER NOT NULL,
-                            name TEXT NOT NULL CHECK(name <> ''),
-                            date TEXT DEFAULT (date('now')),
-                            time TEXT,
-                            cost REAL DEFAULT 0 CHECK(cost >= 0),
-                            description TEXT,
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            FOREIGN KEY(destination_id) REFERENCES destinations(id) ON DELETE CASCADE
-                        )''')
+    @classmethod
+    def create_table(cls):
+        """ Create a new table to persist the attributes of activities instances """
+        sql = """
+            CREATE TABLE IF NOT EXISTS activities (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL CHECK(name <> ''),
+            date TEXT,
+            time TEXT,
+            cost TEXT,
+            description TEXT,
+            destination_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            FOREIGN KEY (destination_id) REFERENCES destination(id))
+        """
+        CURSOR.execute(sql)
+        CONN.commit()
 
     @classmethod
-    def drop_table(cls, cursor):
-        """Drop the activities table if it exists."""
-        cursor.execute("DROP TABLE IF EXISTS activities")
+    def drop_table(cls):
+        """ Drop the table that persists Activity instances """
+        sql = """
+            DROP TABLE IF EXISTS activities;
+        """
+        CURSOR.execute(sql)
+        CONN.commit()
 
-    
-    def delete(cls, cursor, activity_id):
-        cursor.execute("DELETE FROM activities WHERE id = ?", (activity_id,))
-        cursor.connection.commit()
-        return cursor.rowcount > 0 
-        # This checks if the number of affected rows is greater than zero.
-
-    @classmethod
-    def get_all(cls, cursor):
-        cursor.execute("SELECT * FROM activity")
-        return cursor.fetchall()
-
-    @classmethod
-    def update(cls, name, date, time, cost, description):
+    def save(self):
+        """ Insert a new row with the name, date, time, cost, description, created_at and destination id values of the current Activty object.
+        Update object id attribute using the primary key value of new row.
+        Save the object in local dictionary using table row's PK as dictionary key"""
         try:
-            with CONN:
-                CURSOR.execute(f""""
-                    UPDATE SET name=?, species=?, breed=?, temperament=?
-                    WHERE id = ?;       
-                """,)
-                
+            sql = """
+            INSERT INTO activities (name, date, time, cost, description, destination_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """
+            CURSOR.execute(sql, (self.name, self.date, self.time, self.cost, self.description, self.destination_id))
+            CONN.commit()
+        
+            self.id = CURSOR.lastrowid
+            type(self).all[self.id] = self
         except Exception as e:
-            return e
+            print(f"Error saving activity: {e}")
+
+    @classmethod
+    def create(cls, name, date, cost, description, destination_id):
+        """ Initialize a new Activity instance and save the object to the database"""
+        activity = cls(name, date, cost, description, destination_id)
+        activity.save()
+        return activity
     
+    def update(self):
+        """Update the table row corresponding to the current Activity instance."""
+        try:
+            sql = """
+            UPDATE activities
+            SET name = ?, date = ?, time = ?, cost = ?, description = ?, destination_id = ?
+            WHERE id = ?
+            """
+            CURSOR.execute(sql, (self.name, self.date, self.time, self.cost, self.description, self.destination_id, self.id))
+            CONN.commit()
+        except Exception as e:
+            print(f"Error updating activity: {e}")
+
+    
+    def delete(self):
+        """Delete the table row corresponding to the current Activity instance and update local dictionary."""
+        try:
+            sql = "DELETE FROM activities WHERE id = ?"
+            CURSOR.execute(sql, (self.id,))
+            CONN.commit()
+            del type(self).all[self.id]
+            self.id = None
+        except Exception as e:
+            print(f"Error deleting activity: {e}")
+
+
+    
+    @classmethod
+    def instance_from_db(cls, row):
+        """Return an Activity object having the attribute values from the table row."""
+
+        activity = cls.all.get(row[0])
+        if activity:
+            activity.name = row [1]
+            activity.date = row [2]
+            activity.cost = row [3]
+            activity.description = row [4]
+            activity.destination_id = row [5]
+        else:
+            activity = cls(row[1], row[2], row[3], row[4], row[5], row[0])
+            cls.all[activity.id] = activity
+        return activity
+    
+    @classmethod
+    def get_all(cls):
+        """Return a list containing an Activity object for each row in the table."""
+        try:
+            sql = "SELECT * FROM activities"
+            rows = CURSOR.execute(sql).fetchall()
+            return [cls.instance_from_db(row) for row in rows]
+        except Exception as e:
+            print(f"Error retrieving activities: {e}")
+            return []
+
+    
+
+
+
+        
     def expenses(self):
         from expense import Expense
         return [expenses for expenses in Expense.get_all() if  is self]
