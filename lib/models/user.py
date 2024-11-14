@@ -114,6 +114,6 @@ def create(cls, name, email):
             print(f"Error deleting user {user_id}: {e}")
             return False
 
-# def destinations(self):
-        # from destination import Destination
-#         return[destination for destination in Destination.get_all() if destination.user is self] 
+def destinations(self):
+        from destination import Destination
+        return[destination for destination in Destination.get_all() if destination.user is self] 
