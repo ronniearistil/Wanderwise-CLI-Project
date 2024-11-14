@@ -11,10 +11,7 @@ from lib.models.database import CURSOR, CONN
 console = Console()
 
 def prompt_input(prompt_text, input_type=str, optional=False):
-    """
-    Prompt the user for input with error handling.
-    Allows exiting ('e') or going back ('b') to previous menu.
-    """
+    """Prompt for input with validation and error handling."""
     while True:
         response = click.prompt(f"{prompt_text} (or 'e' to exit, 'b' to go back)", default='', show_default=False)
         if response.lower() == 'e':
@@ -24,20 +21,15 @@ def prompt_input(prompt_text, input_type=str, optional=False):
             console.print("[yellow]Returning to the previous menu.[/yellow]")
             return 'b'
         if optional and not response:
-            return None  # Allow empty input if marked optional
+            return None
 
         try:
-            response = input_type(response)
+            return input_type(response)
         except ValueError:
-            console.print(f"[red]Invalid input. Please enter a valid {input_type.__name__} or 'b' to go back.[/red]")
-            continue
-        return response
+            console.print(f"[red]Invalid input. Please enter a valid {input_type.__name__}.[/red]")
 
 def display_menu(options, menu_name="Main", show_welcome=True):
-    """
-    Display a menu with the provided options and return the user's choice.
-    Optionally displays a welcome message on the main menu.
-    """
+    """Display a menu with the provided options, with an optional welcome message."""
     if show_welcome:
         console.print(f"\n[cyan bold]Welcome to Wanderwise! Select an option from the {menu_name} menu.[/cyan bold]")
     else:
@@ -55,14 +47,14 @@ def cli():
 
 @cli.command()
 def main_menu():
-    """Main menu for navigating between management menus."""
+    """Main menu for navigating management menus."""
     while True:
         choice = display_menu({
             "1": "User Management",
             "2": "Destination Management",
             "3": "Activity Management",
             "4": "Expense Management"
-        }, show_welcome=True)  # Show welcome only for the main menu
+        }, "Main", show_welcome=True)  # Show welcome only for the main menu
         if choice == '1':
             user_management_menu()
         elif choice == '2':
@@ -75,47 +67,8 @@ def main_menu():
             console.print("[bold red]Exiting...[/bold red]")
             break
 
-def user_management_menu():
-    """Menu for managing user records."""
-    management_menu("User", User, {
-        "name": "Enter user name",
-        "email": "Enter user email"
-    })
-
-def destination_management_menu():
-    """Menu for managing destination records."""
-    management_menu("Destination", Destination, {
-        "name": "Enter destination name",
-        "location": "Enter location",
-        "description": "Enter description",
-        "user_id": "Enter user ID"
-    })
-
-def activity_management_menu():
-    """Menu for managing activity records."""
-    management_menu("Activity", Activity, {
-        "destination_id": "Enter destination ID",
-        "name": "Enter activity name",
-        "date": "Enter date (MM-DD-YYYY)",
-        "time": "Enter time",
-        "cost": "Enter activity cost",
-        "description": "Enter description"
-    })
-
-def expense_management_menu():
-    """Menu for managing expense records."""
-    management_menu("Expense", Expense, {
-        "activity_id": "Enter activity ID",
-        "amount": "Enter amount",
-        "date": "Enter date (MM-DD-YYYY)",
-        "category": "Enter category",
-        "description": "Enter description"
-    })
-
 def management_menu(name, model, fields):
-    """
-    Reusable function to display CRUD options for each model.
-    """
+    """Display CRUD options for each model."""
     while True:
         choice = display_menu({
             "1": f"Add {name}",
@@ -134,77 +87,96 @@ def management_menu(name, model, fields):
         elif choice == 'e':
             break
 
+# Define management menus for each model
+def user_management_menu():
+    management_menu("User", User, {
+        "name": "Enter user name",
+        "email": "Enter user email"
+    })
+
+def destination_management_menu():
+    management_menu("Destination", Destination, {
+        "name": "Enter destination name",
+        "location": "Enter location",
+        "description": "Enter description",
+        "user_id": "Enter user ID"
+    })
+
+def activity_management_menu():
+    management_menu("Activity", Activity, {
+        "destination_id": "Enter destination ID",
+        "name": "Enter activity name",
+        "date": "Enter date (MM-DD-YYYY)",
+        "time": "Enter time",
+        "cost": "Enter activity cost",
+        "description": "Enter description"
+    })
+
+def expense_management_menu():
+    management_menu("Expense", Expense, {
+        "activity_id": "Enter activity ID",
+        "amount": "Enter amount",
+        "date": "Enter date (MM-DD-YYYY)",
+        "category": "Enter category",
+        "description": "Enter description"
+    })
+
 def add_entry(model, fields):
-    """
-    Add a new entry for a specified model using field prompts.
-    """
+    """Add a new entry."""
     data = {key: prompt_input(label, optional=True) for key, label in fields.items()}
     try:
-        if hasattr(model, 'create') and callable(getattr(model, 'create')):
-            model.create(**data)
+        # Pass `CURSOR` if model requires it
+        if model.__name__ == 'Expense':  # Adjust if other models need CURSOR
+            entry = model.create(CURSOR, **data)
+        else:
+            entry = model.create(**data)
+        if entry:
             console.print(f"[green]{model.__name__} added successfully.[/green]")
         else:
-            console.print(f"[red]Error: {model.__name__} does not support direct creation with 'create' method.[/red]")
+            console.print(f"[red]Failed to add {model.__name__}. Check your data inputs.[/red]")
     except Exception as e:
         console.print(f"[red]Error adding {model.__name__}: {e}[/red]")
 
 def view_entries(model, name):
-    """
-    Display all entries for a specified model in a table format.
-    """
-    try:
-        if hasattr(model, 'get_all') and callable(getattr(model, 'get_all')):
-            entries = model.get_all()
-            if entries:
-                table = Table(title=f"{name}s")
-                column_names = [desc[0] for desc in CURSOR.description]
-                for col_name in column_names:
-                    table.add_column(col_name.capitalize(), justify="left")
-                for entry in entries:
-                    table.add_row(*map(str, entry))
-                console.print(table)
-            else:
-                console.print(f"[yellow]No {name.lower()}s found.[/yellow]")
-        else:
-            console.print(f"[red]Error: {model.__name__} does not support retrieval with 'get_all' method.[/red]")
-    except Exception as e:
-        console.print(f"[red]Error retrieving {name} records: {e}[/red]")
+    """Display all entries in a table format."""
+    entries = model.get_all()
+    if entries:
+        table = Table(title=f"{name}s")
+        for col in vars(entries[0]).keys():
+            table.add_column(col.capitalize())
+        for entry in entries:
+            table.add_row(*[str(getattr(entry, col)) for col in vars(entry).keys()])
+        console.print(table)
+    else:
+        console.print(f"[yellow]No {name.lower()}s found.[/yellow]")
 
 def edit_entry(model, name, fields):
-    """
-    Edit an existing entry by ID with the option to update specific fields.
-    """
+    """Edit an existing entry."""
     entry_id = prompt_input(f"Enter {name.lower()} ID to edit", int)
+    existing_entry = model.find_by_id(entry_id)
+    if not existing_entry:
+        console.print(f"[red]{name} ID '{entry_id}' not found.[/red]")
+        return
+    console.print("[yellow]Leave field empty to keep current value.[/yellow]")
+    updated_data = {
+        key: prompt_input(f"{label} [Current: {getattr(existing_entry, key)}]", optional=True) or getattr(existing_entry, key)
+        for key, label in fields.items()
+    }
     try:
-        if hasattr(model, 'find_by_id') and callable(getattr(model, 'find_by_id')) and hasattr(model, 'update') and callable(getattr(model, 'update')):
-            existing_entry = model.find_by_id(entry_id)
-            if not existing_entry:
-                console.print(f"[red]{name} ID '{entry_id}' not found.[/red]")
-                return
-
-            console.print("[yellow]Leave field empty to keep current value.[/yellow]")
-            updated_data = {key: prompt_input(f"{label} [Current: {getattr(existing_entry, key, None)}]", optional=True) for key, label in fields.items()}
-            model.update(entry_id, **{k: v for k, v in updated_data.items() if v is not None})
-            console.print(f"[green]{name} ID '{entry_id}' updated successfully.[/green]")
-        else:
-            console.print(f"[red]Error: {model.__name__} does not support direct updating with 'update' method.[/red]")
+        model.update(entry_id, **updated_data)
+        console.print(f"[green]{name} ID '{entry_id}' updated successfully.[/green]")
     except Exception as e:
-        console.print(f"[red]Error updating {model.__name__} ID '{entry_id}': {e}[/red]")
+        console.print(f"[red]Error updating {name}: {e}[/red]")
 
 def delete_entry(model, name):
-    """
-    Delete an entry by ID after user confirmation.
-    """
+    """Delete an entry by ID."""
     entry_id = prompt_input(f"Enter {name.lower()} ID to delete", int)
     if click.confirm(f"Are you sure you want to delete this {name.lower()}?"):
         try:
-            if hasattr(model, 'delete') and callable(getattr(model, 'delete')):
-                model.delete(entry_id)
-                console.print(f"[green]{name} ID '{entry_id}' deleted successfully.[/green]")
-            else:
-                console.print(f"[red]Error: {model.__name__} does not support direct deletion with 'delete' method.[/red]")
+            model.delete(entry_id)
+            console.print(f"[green]{name} ID '{entry_id}' deleted successfully.[/green]")
         except Exception as e:
-            console.print(f"[red]Error deleting {model.__name__} ID '{entry_id}': {e}[/red]")
+            console.print(f"[red]Error deleting {name}: {e}[/red]")
 
 if __name__ == "__main__":
     main_menu()
