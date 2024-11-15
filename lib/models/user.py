@@ -113,5 +113,6 @@ class User(ValidatorMixin):
             print(f"Error deleting user {user_id}: {e}")
             return False
 
-user1 = User(name="Test User", email="testuser@example.com")
-ipdb.set_trace()
+if __name__ == "__main__":
+    user1 = User(name="Test User", email="testuser@example.com")
+    ipdb.set_trace()
