@@ -82,33 +82,39 @@ class Activity:
             print("you have an error initializing a Activity and saving the object to the database", e)
             return None
 
-    
-    def update(self):
+    @classmethod
+    def update(cls, activity_id, name, date, time, cost, description, destination_id):
         """Update the table row corresponding to the current Activity instance."""
         try:
             sql = """
-            UPDATE activities
-            SET name = ?, date = ?, time = ?, cost = ?, description = ?, destination_id = ?
-            WHERE id = ?
+                UPDATE activities
+                SET name = ?, date = ?, time = ?, cost = ?, description = ?, destination_id = ?
+                WHERE id = ?
             """
-            CURSOR.execute(sql, (self.name, self.date, self.time, self.cost, self.description, self.destination_id, self.id,))
+            CURSOR.execute(
+                sql, (name, date, time, cost, description, activity_id, destination_id)
+            )
             CONN.commit()
-            # ipdb.set_trace()
+            return CURSOR.rowcount > 0
         except Exception as e:
             print(f"Error updating activity: {e}")
+            return e
 
 
-    
-    def delete(self):
+    @classmethod
+    def delete(cls, activity_id):
         """Delete the table row corresponding to the current Activity instance and update local dictionary."""
         try:
-            sql = "DELETE FROM activities WHERE id = ?"
-            CURSOR.execute(sql, (self.id,))
-            del type(self).all[self.id]
-            self.id = None
+            sql = """
+                DELETE FROM activities
+                WHERE id = ?
+                """
+            CURSOR.execute(sql, (activity_id,))
             CONN.commit()
+            activity_id = None
         except Exception as e:
             print(f"Error deleting activity: {e}")
+            return e
 
 
     
@@ -145,31 +151,14 @@ class Activity:
         return None
         
     @classmethod
-    def find_by_id(cls, expense_id):
-        """Retrieve an expense by its ID and return an Expense object."""
-        CURSOR.execute("SELECT * FROM expenses WHERE id = ?", (expense_id,))
+    def find_by_id(cls, activity_id):
+        """Retrieve an activity by its ID and return an Activity object."""
+        CURSOR.execute("SELECT * FROM activities WHERE id = ?", (activity_id,))
         row = CURSOR.fetchone()
         if row:
-            return cls(row[1], row[2], row[3], row[4], row[5], row[0])
+            return cls(row[1], row[2], row[3], row[4], row[5], row[6], row[0])
         return None
-            
-    # @classmethod
-    # def find_by_cost(cls, cost):
-    #     """Return a Activity object corresponding to the table row matching the specified primary key"""
-    #     sql = """
-    #         SELECT * FROM activities WHERE cost = ?
-    #     """
-    #     row = CURSOR.execute(sql, (cost,)).fetchone()
-    #     return cls.instance_from_db(row) if row else None
-    
-    # @classmethod
-    # def filter_by_cost(cls, cost):
-    #      #"""Return a list of activities that have an exact cost match."""
-    #     return [activity for activity in cls.get_all() if activity.cost == cost]
-        
-    # def expenses(self):
-    #     from expense import Expense
-    #     return [expenses for expenses in Expense.get_all() if  is self]
+
 
     # *******
     # PROPERTIES
@@ -181,12 +170,12 @@ class Activity:
     
     @name.setter
     def name(self, value_to_validate):
-        # if not isinstance(value_to_validate, str):
-        #     raise ("name must be a string")
-        # elif len(value_to_validate) not in range(2, 50):
-        #     raise ("name must be in between 2 and 50 characters")
+        if not isinstance(value_to_validate, str):
+            raise TypeError("name must be a string")
+        elif len(value_to_validate) not in range(2, 50):
+            raise ValueError("name must be in between 2 and 50 characters")
         # elif not hasattr(self, "_name"):
-        #     raise ("name cannot be initialized")
+        #     raise AttributeError("name cannot be initialized")
         self._name = value_to_validate  #Set the validated name
 
 
