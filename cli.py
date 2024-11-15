@@ -3,7 +3,6 @@ from rich.console import Console
 from rich.table import Table
 from lib.models.destination import Destination
 from lib.models.activity import Activity
-from lib.models.expense import Expense
 from lib.models.user import User
 from lib.helpers import ValidatorMixin, format_date
 from lib.models.database import CURSOR, CONN
@@ -53,7 +52,6 @@ def main_menu():
             "1": "User Management",
             "2": "Destination Management",
             "3": "Activity Management",
-            "4": "Expense Management"
         }, "Main", show_welcome=True)  # Show welcome only for the main menu
         if choice == '1':
             user_management_menu()
@@ -61,8 +59,6 @@ def main_menu():
             destination_management_menu()
         elif choice == '3':
             activity_management_menu()
-        elif choice == '4':
-            expense_management_menu()
         elif choice == 'e':
             console.print("[bold red]Exiting...[/bold red]")
             break
@@ -109,15 +105,6 @@ def activity_management_menu():
         "date": "Enter date (MM-DD-YYYY)",
         "time": "Enter time",
         "cost": "Enter activity cost",
-        "description": "Enter description"
-    })
-
-def expense_management_menu():
-    management_menu("Expense", Expense, {
-        "activity_id": "Enter activity ID",
-        "amount": "Enter amount",
-        "date": "Enter date (MM-DD-YYYY)",
-        "category": "Enter category",
         "description": "Enter description"
     })
 
