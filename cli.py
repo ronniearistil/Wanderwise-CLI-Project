@@ -99,7 +99,7 @@ def destination_management_menu():
         "name": "Enter destination name",
         "location": "Enter location",
         "description": "Enter description",
-        "user_id": "Enter user ID"
+        "user_id": "Enter user ID,"
     })
 
 def activity_management_menu():
