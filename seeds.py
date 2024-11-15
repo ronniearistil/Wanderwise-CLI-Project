@@ -4,7 +4,6 @@ from faker import Faker
 from lib.models import CONN, CURSOR
 from lib.models.destination import Destination 
 from lib.models.activity import Activity 
-from lib.models.expense import Expense 
 from lib.models.user import User 
 import random
 from datetime import datetime, timedelta
@@ -20,13 +19,11 @@ def initialize_database():
     User.drop_table()
     Destination.drop_table()
     Activity.drop_table()
-    Expense.drop_table()
     
     # Recreate tables with updated schema
     User.create_table()
     Destination.create_table()
     Activity.create_table()
-    Expense.create_table()
     # ipdb.set_trace()
     print("Database initialized with tables created.")
 
@@ -89,20 +86,6 @@ def seed_activities(destinations, num_per_destination=3):
     print(f"{len(activities)} activities seeded.")
     return activities
 
-# Function to seed expenses for each activity
-def seed_expenses(activity_ids, num_per_activity=2):
-    """Seed the expenses table with sample data for each activity."""
-    expenses = []
-    for activity_id in activity_ids:
-        for _ in range(num_per_activity):
-            amount = round(random.uniform(10, 500), 2)
-            date = (datetime.now() - timedelta(days=random.randint(0, 30))).strftime("%m-%d-%Y")
-            category = random.choice(["Food", "Transport", "Accommodation", "Entertainment"])
-            expense = Expense.create(activity_id=activity_id, amount=amount, date=date, category=category)
-            expenses.append(expense)
-    print(f"{len(expenses)} expenses seeded.")
-    return expenses
-
 # Main seeding function to populate the database
 def seed_all():
     """Seed the database with sample users, destinations, activities, and expenses."""
@@ -112,8 +95,7 @@ def seed_all():
     # Seed tables
     users = seed_users()  # Seed users first
     destinations = seed_destinations(users)  # Seed destinations with linked user_ids
-    activities = seed_activities(destinations)  # Seed activities linked to destinations
-    seed_expenses(activities)  # Seed expenses linked to activities by passing activity IDs directly
+    activities = seed_activities(destinations)  # Seed activities linked to destinations 
     print("Database seeding complete.")
 
 # Run seeding if executed directly
