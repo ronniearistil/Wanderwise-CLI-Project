@@ -113,6 +113,7 @@ class User(ValidatorMixin):
             print(f"Error deleting user {user_id}: {e}")
             return False
 
+# Sample instance of Expense for testing
 if __name__ == "__main__":
     user1 = User(name="Test User", email="testuser@example.com")
     ipdb.set_trace()

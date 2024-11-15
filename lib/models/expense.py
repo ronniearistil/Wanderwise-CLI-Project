@@ -129,7 +129,7 @@ class Expense(ValidatorMixin):
             return False
 
 
-# Simple instance of Expense for testing
+# Sample instance of Expense for testing
 if __name__ == "__main__":
     expense1 = Expense(activity_id=1, amount=200, description="Lunch expense", date="12-01-2024", category="Food")
     ipdb.set_trace() 
