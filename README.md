@@ -26,6 +26,11 @@ To run this project locally, follow these steps:
 2. **Install dependencies**:
    ```bash
    pipenv install
+   pip install rich
+   pip install babel
+   pip install click
+   pip install faker
+   pip install ipdb
    ```
 
 3. **Run the CLI**:

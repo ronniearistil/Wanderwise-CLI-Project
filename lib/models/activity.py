@@ -185,8 +185,6 @@ class Activity:
 
     @date.setter
     def date(self, date_validate):
-        # if not isinstance(date_validate, str):
-        #     raise TypeError("Date must be string")
         self._date = date_validate
 
     @property
@@ -204,10 +202,6 @@ class Activity:
 
     @cost.setter
     def cost(self, value_cost):
-        # if type(value_cost) not in (int, float):
-        #     raise TypeError("cost must be an integer or float")
-        # elif value_cost < 0:
-        #     raise ValueError("cost cannot be negative")
         self._cost = value_cost  # Set the validated cost
 
     @property
@@ -222,5 +216,3 @@ if __name__ == "__main__":
     activity1 = Activity(destination_id=1, name="Hiking", date="2024-12-01", time="08:00", cost=50, description="A morning hiking trip.", id = 1)
     activity2 = Activity(destination_id=2, name="Bicycle", date="2024-11-01", time="09:00", cost=100, description="A morning hiking.", id = 2)
 # import ipdb; ipdb.set_trace()
-
-# Activity.create_table()
