@@ -42,6 +42,32 @@ class Expense(ValidatorMixin):
             print(f"Error retrieving activity for expense {self.id}: {e}")
             return None
 
+    CREATE_TABLE_SQL = '''CREATE TABLE IF NOT EXISTS expenses (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            activity_id INTEGER NOT NULL,
+                            amount REAL NOT NULL,
+                            date TEXT NOT NULL,
+                            category TEXT NOT NULL,
+                            description TEXT,
+                            FOREIGN KEY(activity_id) REFERENCES activities(id)
+                        )'''
+
+    @classmethod
+    def create_table(cls):
+        try:
+            CURSOR.execute(cls.CREATE_TABLE_SQL)
+        except Exception as e:
+            return e
+
+    @classmethod
+    def drop_table(cls):
+        try:
+            CURSOR.execute(
+                "DROP TABLE IF EXISTS expenses",
+            )
+        except Exception as e:
+            return e
+
     @classmethod
     def create(cls, activity_id, amount, description=None, date=None, category="General"):
         """Create a new expense record and return an Expense object."""
@@ -104,8 +130,9 @@ class Expense(ValidatorMixin):
 
 
 # Simple instance of Expense for testing
-expense1 = Expense(activity_id=1, amount=200, description="Lunch expense", date="12-01-2024", category="Food")
-ipdb.set_trace() 
+if __name__ == "__main__":
+    expense1 = Expense(activity_id=1, amount=200, description="Lunch expense", date="12-01-2024", category="Food")
+    ipdb.set_trace() 
 
 
 

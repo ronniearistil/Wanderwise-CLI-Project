@@ -1,4 +1,4 @@
-from lib.models.database import CURSOR, CONN  # Only import the database connection
+from lib.models.__init__ import CURSOR, CONN  # Only import the database connection
 import ipdb
 
 class Activity:
@@ -9,10 +9,10 @@ class Activity:
         # Instance attributes
         self.id = id
         self.name = name
-        self.destination_id = destination_id
         self.date = date
         self.time = time
         self.cost = cost
+        self.destination_id = destination_id
         self.description = description
 
     # ********
@@ -20,32 +20,33 @@ class Activity:
     # ********
 
     @classmethod
-    @classmethod
     def create_table(cls):
-        """ Create a new table to persist the attributes of activities instances """
-        sql = """
-            CREATE TABLE IF NOT EXISTS activities (
-            id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL CHECK(name <> ''),
-            date TEXT,
-            time TEXT,
-            cost TEXT,
-            description TEXT,
-            destination_id INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            FOREIGN KEY (destination_id) REFERENCES destination(id))
-        """
-        CURSOR.execute(sql)
-        CONN.commit()
+        try:
+            CURSOR.execute('''CREATE TABLE IF NOT EXISTS activities (
+                            id INTEGER PRIMARY KEY,
+                            name TEXT NOT NULL CHECK(name <> ''),
+                            date TEXT NOT NULL CHECK(date <> ''),
+                            time TEXT,
+                            cost INTEGER,
+                            description TEXT,
+                            destination_id INTEGER,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY(destination_id) REFERENCES destinations(id) ON DELETE CASCADE
+                        )''')
+        except Exception as e:
+            print("there was an error creating your table")
+            return e
 
     @classmethod
     def drop_table(cls):
-        """ Drop the table that persists Activity instances """
-        sql = """
-            DROP TABLE IF EXISTS activities;
-        """
-        CURSOR.execute(sql)
-        CONN.commit()
+        try:
+            """ Drop the table that persists Activity instances """
+            sql = """
+                DROP TABLE IF EXISTS activities;
+            """
+            CURSOR.execute(sql)
+        except Exception as e:
+            print("there was an error dropping the table")
 
     def save(self):
         """ Insert a new row with the name, date, time, cost, description, created_at and destination id values of the current Activty object.
@@ -56,20 +57,29 @@ class Activity:
             INSERT INTO activities (name, date, time, cost, description, destination_id)
             VALUES (?, ?, ?, ?, ?, ?)
             """
+            # ipdb.set_trace()
             CURSOR.execute(sql, (self.name, self.date, self.time, self.cost, self.description, self.destination_id))
             CONN.commit()
-        
+
             self.id = CURSOR.lastrowid
             type(self).all[self.id] = self
         except Exception as e:
-            print(f"Error saving activity: {e}")
+            CONN.rollback()
+            print("Error saving activity", e)
+            return e
 
     @classmethod
-    def create(cls, name, date, cost, description, destination_id):
-        """ Initialize a new Activity instance and save the object to the database"""
-        activity = cls(name, date, cost, description, destination_id)
-        activity.save()
-        return activity
+    def create(cls, name, date, time, cost, description, destination_id):
+        try:
+            """ Initialize a new Activity instance and save the object to the database """
+            activity = cls(name, date, time, cost, description, destination_id)
+            # ipdb.set_trace()
+            activity.save()
+            return activity
+        except Exception as e:
+            print("you have an error initializing a Activity and saving the object to the database", e)
+            return None
+
     
     def update(self):
         """Update the table row corresponding to the current Activity instance."""
@@ -100,19 +110,24 @@ class Activity:
     
     @classmethod
     def instance_from_db(cls, row):
-        """Return an Activity object having the attribute values from the table row."""
+        try:
+            """Return an Activity object having the attribute values from the table row."""
 
-        activity = cls.all.get(row[0])
-        if activity:
-            activity.name = row [1]
-            activity.date = row [2]
-            activity.cost = row [3]
-            activity.description = row [4]
-            activity.destination_id = row [5]
-        else:
-            activity = cls(row[1], row[2], row[3], row[4], row[5], row[0])
-            cls.all[activity.id] = activity
-        return activity
+            activity = cls.all.get(row[0])
+            if activity:
+                activity.name = row [1]
+                activity.date = row [2]
+                activity.time = row [3]
+                activity.cost = row [4]
+                activity.description = row [5]
+                activity.destination_id = row [6]
+            else:
+                activity = cls(row[1], row[2], row[3], row[4], row[5], row[6], row[0])
+                cls.all[activity.id] = activity
+            return activity
+        except Exception as e:
+            print("there was an issue returning your Activity obj from the database", e)
+            return e
     
     @classmethod
     def get_all(cls):
@@ -122,8 +137,8 @@ class Activity:
             rows = CURSOR.execute(sql).fetchall()
             return [cls.instance_from_db(row) for row in rows]
         except Exception as e:
-            print(f"Error retrieving activities: {e}")
-            return []
+            print(f"Error retrieving activities", e)
+        return None
             
     @classmethod
     def find_by_cost(cls, cost):
@@ -136,7 +151,7 @@ class Activity:
     
     @classmethod
     def filter_by_cost(cls, cost):
-    #"""Return a list of activities that have an exact cost match."""
+         #"""Return a list of activities that have an exact cost match."""
         return [activity for activity in cls.get_all() if activity.cost == cost]
         
     # def expenses(self):
@@ -168,6 +183,8 @@ class Activity:
 
     @date.setter
     def date(self, date_validate):
+        if not isinstance(date_validate, str):
+            raise TypeError("Date must be string")
         self._date = date_validate
 
     @property
@@ -185,10 +202,10 @@ class Activity:
 
     @cost.setter
     def cost(self, value_cost):
-        if not isinstance(value_cost, (int, float)):
-            return ("cost must be an integer or float")
+        if type(value_cost) not in (int, float):
+            raise TypeError("cost must be an integer or float")
         elif value_cost < 0:
-            return ("cost cannot be negative")
+            raise ValueError("cost cannot be negative")
         self._cost = value_cost  # Set the validated cost
 
     @property
@@ -199,25 +216,8 @@ class Activity:
     def description(self, description_value):
         self._description = description_value
 
-
-    @classmethod
-    def create(cls, cursor, destination_id, name, date=None, time=None, cost=0, description=""):
-        """Insert a new activity into the database."""
-        cursor.execute(
-            "INSERT INTO activities (destination_id, name, date, time, cost, description) VALUES (?, ?, ?, ?, ?, ?)",
-            (destination_id, name, date, time, cost, description)
-        )
-        cursor.connection.commit()
-        return cursor.lastrowid
-
-    @classmethod
-    def get_by_destination(cls, cursor, destination_id):
-        """Retrieve all activities associated with a specific destination."""
-        cursor.execute("SELECT * FROM activities WHERE destination_id = ?", (destination_id,))
-        return cursor.fetchall()
-
-
-
-
-activity1 = Activity(destination_id=1, name="Hiking", date="2024-12-01", time="08:00", cost=50, description="A morning hiking trip.")
-ipdb.set_trace()
+if __name__ == "__main__":
+    activity1 = Activity(destination_id=1, name="Hiking", date="2024-12-01", time="08:00", cost=50, description="A morning hiking trip.")
+    activity2 = Activity(destination_id=2, name="Bicycle", date="2024-11-01", time="09:00", cost=100, description="A morning hiking.")
+    # import ipdb; ipdb.set_trace()
+# Activity.create_table()

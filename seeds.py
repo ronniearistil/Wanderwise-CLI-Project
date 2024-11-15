@@ -1,9 +1,14 @@
 # seeds.py
 
 from faker import Faker
-from lib.models import Destination, Activity, Expense, User, CONN, CURSOR
+from lib.models import CONN, CURSOR
+from lib.models.destination import Destination 
+from lib.models.activity import Activity 
+from lib.models.expense import Expense 
+from lib.models.user import User 
 import random
 from datetime import datetime, timedelta
+# import ipdb
 
 # Initialize Faker to generate random data
 fake = Faker()
@@ -12,18 +17,17 @@ fake = Faker()
 def initialize_database():
     """Initialize the database by dropping and recreating all tables."""
     # Drop tables to reset schema
-    User.drop_table(CURSOR)
-    Destination.drop_table(CURSOR)
-    Activity.drop_table(CURSOR)
-    Expense.drop_table(CURSOR)
+    User.drop_table()
+    Destination.drop_table()
+    Activity.drop_table()
+    Expense.drop_table()
     
     # Recreate tables with updated schema
-    User.create_table(CURSOR)
-    Destination.create_table(CURSOR)
-    Activity.create_table(CURSOR)
-    Expense.create_table(CURSOR)
-    
-    CONN.commit()
+    User.create_table()
+    Destination.create_table()
+    Activity.create_table()
+    Expense.create_table()
+    # ipdb.set_trace()
     print("Database initialized with tables created.")
 
 # Function to seed users
@@ -33,7 +37,7 @@ def seed_users(num=3):
     for _ in range(num):
         name = fake.name()
         email = fake.email()
-        user = User.create(CURSOR, name=name, email=email)  # Pass CURSOR as the first argument
+        user = User.create(name=name, email=email)  # Pass CURSOR as the first argument
         # Fetch the last inserted row to get the ID
         CURSOR.execute("SELECT * FROM users WHERE id = (SELECT MAX(id) FROM users)")
         user_record = CURSOR.fetchone()  # Fetch the full record with the ID
@@ -50,7 +54,7 @@ def seed_destinations(users, num=5):
             name = fake.city()
             location = fake.country()
             description = fake.text(max_nb_chars=50)
-            destination = Destination.create(CURSOR, name, location, description, user[0])  # Match argument order
+            destination = Destination.create(name, location, description, user[0])  # Match argument order
             CURSOR.execute("SELECT * FROM destinations WHERE id = (SELECT MAX(id) FROM destinations)")
             destination_record = CURSOR.fetchone()  # Fetch the full record with the ID
             destinations.append(destination_record)
@@ -70,11 +74,10 @@ def seed_activities(destinations, num_per_destination=3):
         for _ in range(num_per_destination):
             name = random.choice(activity_names)
             description = fake.sentence()
-            date = fake.date_this_year()
+            date = str(fake.date_this_year())
             time = fake.time()
             cost = round(random.uniform(10, 500), 2)
             activity_id = Activity.create(
-                CURSOR,
                 destination_id=destination[0], 
                 name=name, 
                 date=date, 
@@ -90,12 +93,12 @@ def seed_activities(destinations, num_per_destination=3):
 def seed_expenses(activity_ids, num_per_activity=2):
     """Seed the expenses table with sample data for each activity."""
     expenses = []
-    for activity_id in activity_ids:
+    for activity in activity_ids:
         for _ in range(num_per_activity):
             amount = round(random.uniform(10, 500), 2)
             date = (datetime.now() - timedelta(days=random.randint(0, 30))).strftime("%m-%d-%Y")
             category = random.choice(["Food", "Transport", "Accommodation", "Entertainment"])
-            expense = Expense.create(CURSOR, activity_id=activity_id, amount=amount, date=date, category=category)
+            expense = Expense.create(activity_id=activity.id, amount=amount, date=date, category=category)
             expenses.append(expense)
     print(f"{len(expenses)} expenses seeded.")
     return expenses
