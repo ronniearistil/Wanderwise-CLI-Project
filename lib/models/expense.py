@@ -1,7 +1,7 @@
 from lib.models.__init__ import CURSOR, CONN
 from lib.helpers import ValidatorMixin
 from datetime import datetime
-import ipdb
+# import ipdb
 
 class Expense(ValidatorMixin):
     """Model for expenses associated with an activity."""
@@ -88,8 +88,8 @@ class Expense(ValidatorMixin):
     def get_all(cls):
         """Retrieve all expenses as Expense objects."""
         CURSOR.execute("SELECT * FROM expenses")
-        rows = CURSOR.fetchall()
-        return [cls(row[1], row[2], row[3], row[4], row[5], row[0]) for row in rows]
+        data = CURSOR.fetchall()
+        return [cls(row[1], row[2], row[3], row[4], row[5], row[0]) for row in data]
 
     @classmethod
     def find_by_id(cls, expense_id):
@@ -132,7 +132,7 @@ class Expense(ValidatorMixin):
 # Simple instance of Expense for testing
 if __name__ == "__main__":
     expense1 = Expense(activity_id=1, amount=200, description="Lunch expense", date="12-01-2024", category="Food")
-    ipdb.set_trace() 
+    # ipdb.set_trace() ;
 
 
 
