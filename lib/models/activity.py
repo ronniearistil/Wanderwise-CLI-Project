@@ -1,5 +1,6 @@
 from lib.models.__init__ import CURSOR, CONN  # Only import the database connection
-import ipdb
+# from __init__ import CURSOR, CONN  # Only import the database connection
+# import ipdb
 
 class Activity:
     """Model for an activity associated with a destination."""
@@ -25,17 +26,18 @@ class Activity:
             CURSOR.execute('''CREATE TABLE IF NOT EXISTS activities (
                             id INTEGER PRIMARY KEY,
                             name TEXT NOT NULL CHECK(name <> ''),
-                            date TEXT NOT NULL CHECK(date <> ''),
+                            date INTEGER NOT NULL CHECK(date <> ''),
                             time TEXT,
                             cost INTEGER,
                             description TEXT,
                             destination_id INTEGER,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            FOREIGN KEY(destination_id) REFERENCES destinations(id) ON DELETE CASCADE
+                            FOREIGN KEY(destination_id) REFERENCES destinations(id)
                         )''')
         except Exception as e:
-            print("there was an error creating your table")
+            print("There was an error creating your table:", e)
             return e
+
 
     @classmethod
     def drop_table(cls):
@@ -73,7 +75,7 @@ class Activity:
         try:
             """ Initialize a new Activity instance and save the object to the database """
             activity = cls(name, date, time, cost, description, destination_id)
-            # ipdb.set_trace()
+            
             activity.save()
             return activity
         except Exception as e:
@@ -89,10 +91,12 @@ class Activity:
             SET name = ?, date = ?, time = ?, cost = ?, description = ?, destination_id = ?
             WHERE id = ?
             """
-            CURSOR.execute(sql, (self.name, self.date, self.time, self.cost, self.description, self.destination_id, self.id))
+            CURSOR.execute(sql, (self.name, self.date, self.time, self.cost, self.description, self.destination_id, self.id,))
             CONN.commit()
+            # ipdb.set_trace()
         except Exception as e:
             print(f"Error updating activity: {e}")
+
 
     
     def delete(self):
@@ -100,9 +104,9 @@ class Activity:
         try:
             sql = "DELETE FROM activities WHERE id = ?"
             CURSOR.execute(sql, (self.id,))
-            CONN.commit()
             del type(self).all[self.id]
             self.id = None
+            CONN.commit()
         except Exception as e:
             print(f"Error deleting activity: {e}")
 
@@ -139,20 +143,29 @@ class Activity:
         except Exception as e:
             print(f"Error retrieving activities", e)
         return None
+        
+    @classmethod
+    def find_by_id(cls, expense_id):
+        """Retrieve an expense by its ID and return an Expense object."""
+        CURSOR.execute("SELECT * FROM expenses WHERE id = ?", (expense_id,))
+        row = CURSOR.fetchone()
+        if row:
+            return cls(row[1], row[2], row[3], row[4], row[5], row[0])
+        return None
             
-    @classmethod
-    def find_by_cost(cls, cost):
-        """Return a Activity object corresponding to the table row matching the specified primary key"""
-        sql = """
-            SELECT * FROM activities WHERE cost = ?
-        """
-        row = CURSOR.execute(sql, (cost,)).fetchone()
-        return cls.instance_from_db(row) if row else None
+    # @classmethod
+    # def find_by_cost(cls, cost):
+    #     """Return a Activity object corresponding to the table row matching the specified primary key"""
+    #     sql = """
+    #         SELECT * FROM activities WHERE cost = ?
+    #     """
+    #     row = CURSOR.execute(sql, (cost,)).fetchone()
+    #     return cls.instance_from_db(row) if row else None
     
-    @classmethod
-    def filter_by_cost(cls, cost):
-         #"""Return a list of activities that have an exact cost match."""
-        return [activity for activity in cls.get_all() if activity.cost == cost]
+    # @classmethod
+    # def filter_by_cost(cls, cost):
+    #      #"""Return a list of activities that have an exact cost match."""
+    #     return [activity for activity in cls.get_all() if activity.cost == cost]
         
     # def expenses(self):
     #     from expense import Expense
@@ -168,12 +181,12 @@ class Activity:
     
     @name.setter
     def name(self, value_to_validate):
-        if not isinstance(value_to_validate, str):
-            return ("name must be a string")
-        elif len(value_to_validate) not in range(2, 50):
-            return ("name must be in between 2 and 50 characters")
-        elif hasattr(self, "_name"):
-            return ("name cannot be initialized")
+        # if not isinstance(value_to_validate, str):
+        #     raise ("name must be a string")
+        # elif len(value_to_validate) not in range(2, 50):
+        #     raise ("name must be in between 2 and 50 characters")
+        # elif not hasattr(self, "_name"):
+        #     raise ("name cannot be initialized")
         self._name = value_to_validate  #Set the validated name
 
 
@@ -183,8 +196,8 @@ class Activity:
 
     @date.setter
     def date(self, date_validate):
-        if not isinstance(date_validate, str):
-            raise TypeError("Date must be string")
+        # if not isinstance(date_validate, str):
+        #     raise TypeError("Date must be string")
         self._date = date_validate
 
     @property
@@ -202,10 +215,10 @@ class Activity:
 
     @cost.setter
     def cost(self, value_cost):
-        if type(value_cost) not in (int, float):
-            raise TypeError("cost must be an integer or float")
-        elif value_cost < 0:
-            raise ValueError("cost cannot be negative")
+        # if type(value_cost) not in (int, float):
+        #     raise TypeError("cost must be an integer or float")
+        # elif value_cost < 0:
+        #     raise ValueError("cost cannot be negative")
         self._cost = value_cost  # Set the validated cost
 
     @property
@@ -217,7 +230,8 @@ class Activity:
         self._description = description_value
 
 if __name__ == "__main__":
-    activity1 = Activity(destination_id=1, name="Hiking", date="2024-12-01", time="08:00", cost=50, description="A morning hiking trip.")
-    activity2 = Activity(destination_id=2, name="Bicycle", date="2024-11-01", time="09:00", cost=100, description="A morning hiking.")
-    # import ipdb; ipdb.set_trace()
+    activity1 = Activity(destination_id=1, name="Hiking", date="2024-12-01", time="08:00", cost=50, description="A morning hiking trip.", id = 1)
+    activity2 = Activity(destination_id=2, name="Bicycle", date="2024-11-01", time="09:00", cost=100, description="A morning hiking.", id = 2)
+# import ipdb; ipdb.set_trace()
+
 # Activity.create_table()

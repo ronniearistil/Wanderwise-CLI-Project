@@ -1,5 +1,5 @@
 from lib.models.__init__ import CURSOR, CONN
-import ipdb
+# import ipdb
 
 class Destination:
 

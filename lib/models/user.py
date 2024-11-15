@@ -1,7 +1,7 @@
 from lib.models.__init__ import CURSOR, CONN
 from lib.helpers import ValidatorMixin
 from datetime import datetime
-import ipdb
+# import ipdb
 
 class User(ValidatorMixin):
     """Model for a user in the Wanderwise application."""
@@ -115,4 +115,4 @@ class User(ValidatorMixin):
 
 if __name__ == "__main__":
     user1 = User(name="Test User", email="testuser@example.com")
-    ipdb.set_trace()
+    # ipdb.set_trace()

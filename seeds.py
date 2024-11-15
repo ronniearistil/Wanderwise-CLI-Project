@@ -93,12 +93,12 @@ def seed_activities(destinations, num_per_destination=3):
 def seed_expenses(activity_ids, num_per_activity=2):
     """Seed the expenses table with sample data for each activity."""
     expenses = []
-    for activity in activity_ids:
+    for activity_id in activity_ids:
         for _ in range(num_per_activity):
             amount = round(random.uniform(10, 500), 2)
             date = (datetime.now() - timedelta(days=random.randint(0, 30))).strftime("%m-%d-%Y")
             category = random.choice(["Food", "Transport", "Accommodation", "Entertainment"])
-            expense = Expense.create(activity_id=activity.id, amount=amount, date=date, category=category)
+            expense = Expense.create(activity_id=activity_id, amount=amount, date=date, category=category)
             expenses.append(expense)
     print(f"{len(expenses)} expenses seeded.")
     return expenses
