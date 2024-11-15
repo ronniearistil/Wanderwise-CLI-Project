@@ -107,7 +107,8 @@ def activity_management_menu():
         "destination_id": "Enter destination ID",
         "name": "Enter activity name",
         "date": "Enter date (MM-DD-YYYY)",
-        "time": "Enter time",
+        # "time": "Enter time",
+        "time": "Enter time (optional)",
         "cost": "Enter activity cost",
         "description": "Enter description"
     })
@@ -120,35 +121,59 @@ def expense_management_menu():
         "category": "Enter category",
         "description": "Enter description"
     })
-
 def add_entry(model, fields):
-    """Add a new entry."""
-    data = {key: prompt_input(label, optional=True) for key, label in fields.items()}
-    try:
-        # Pass `CURSOR` if model requires it
-        if model.__name__ == 'Expense':  # Adjust if other models need CURSOR
-            entry = model.create(CURSOR, **data)
-        else:
-            entry = model.create(**data)
-        if entry:
-            console.print(f"[green]{model.__name__} added successfully.[/green]")
-        else:
-            console.print(f"[red]Failed to add {model.__name__}. Check your data inputs.[/red]")
-    except Exception as e:
-        console.print(f"[red]Error adding {model.__name__}: {e}[/red]")
+    """Add a new entry with proper validation."""
+    data = {}
+    for key, label in fields.items():
+        value = prompt_input(label, optional=(key == "time"))  # Make 'time' optional
 
+        if key == "cost":  # Explicit handling for cost
+            try:
+                value = float(value)  # Convert cost to float
+                if value < 0:
+                    console.print("[red]Cost must be a non-negative number.[/red]")
+                    return
+            except ValueError:
+                console.print("[red]Invalid Cost: Must be a number.[/red]")
+                return
+        # Handle optional 'time' field
+        if key == "time" and not value:
+            value = None
+        # Handle required fields
+        if not value:
+            console.print(f"[red]Invalid {key.capitalize()}: This field is required.[/red]")
+            return
+        data[key] = value
+    try:
+        entry = model.create(**data)
+        if entry:
+            console.print(f"[green]{model.__name__} added successfully with ID {entry.id}.[/green]")
+        else:
+            console.print(f"[red]Failed to add {model.__name__}: Unknown error.[/red]")
+    except Exception as e:
+        console.print(f"[red]Error creating {model.__name__}: {str(e)}[/red]")
 def view_entries(model, name):
     """Display all entries in a table format."""
-    entries = model.get_all()
-    if entries:
+    try:
+        entries = model.get_all()
+        if not entries:
+            console.print(f"[yellow]No {name.lower()}s found.[/yellow]")
+            return
+
         table = Table(title=f"{name}s")
-        for col in vars(entries[0]).keys():
-            table.add_column(col.capitalize())
+        # Add columns dynamically based on the model attributes
+        attributes = vars(entries[0]).keys()
+        for attr in attributes:
+            table.add_column(attr.capitalize())
+
+        # Add rows dynamically
         for entry in entries:
-            table.add_row(*[str(getattr(entry, col)) for col in vars(entry).keys()])
+            row = [str(getattr(entry, attr)) for attr in attributes]
+            table.add_row(*row)
+
         console.print(table)
-    else:
-        console.print(f"[yellow]No {name.lower()}s found.[/yellow]")
+    except Exception as e:
+        console.print(f"[red]Error displaying {name}s: {e}[/red]")
 
 def edit_entry(model, name, fields):
     """Edit an existing entry."""

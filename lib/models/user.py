@@ -1,14 +1,13 @@
 from lib.models.__init__ import CURSOR, CONN
-from lib.helpers import ValidatorMixin
 from datetime import datetime
-import ipdb
 
-class User(ValidatorMixin):
+
+class User:
     """Model for a user in the Wanderwise application."""
 
     def __init__(self, name, email, created_at=None, id=None):
-        self.name = name
-        self.email = email
+        self.name = name  # Automatically validated by the setter
+        self.email = email  # Automatically validated by the setter
         self.created_at = created_at or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.id = id
 
@@ -18,7 +17,11 @@ class User(ValidatorMixin):
 
     @name.setter
     def name(self, value):
-        self._name = self.validate_text(value)
+        """Validate and set the name."""
+        if isinstance(value, str) and value.strip():
+            self._name = value.strip()
+        else:
+            raise ValueError("Name must be a non-empty string.")
 
     @property
     def email(self):
@@ -26,7 +29,11 @@ class User(ValidatorMixin):
 
     @email.setter
     def email(self, value):
-        self._email = self.validate_email(value)
+        """Validate and set the email."""
+        if isinstance(value, str) and "@" in value and "." in value:
+            self._email = value.strip()
+        else:
+            raise ValueError("Invalid email format.")
 
     def destinations(self):
         """Select all destinations associated with this user."""
@@ -77,9 +84,13 @@ class User(ValidatorMixin):
 
     @classmethod
     def get_all(cls):
-        CURSOR.execute("SELECT * FROM users")
-        data = CURSOR.fetchall()
-        return [cls(row[1], row[2], row[3], row[0]) for row in data]
+        try:
+            CURSOR.execute("SELECT * FROM users")
+            data = CURSOR.fetchall()
+            return [cls(row[1], row[2], row[3], row[0]) for row in data]
+        except Exception as e:
+            print(f"Error retrieving users: {e}")
+            return []
 
     @classmethod
     def find_by_id(cls, user_id):
@@ -112,6 +123,8 @@ class User(ValidatorMixin):
             CONN.rollback()
             print(f"Error deleting user {user_id}: {e}")
             return False
+
+
 
 # Sample instance of Expense for testing
 if __name__ == "__main__":
