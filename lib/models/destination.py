@@ -1,4 +1,5 @@
 from lib.models.__init__ import CURSOR, CONN
+from lib.models import user
 import ipdb
 
 
@@ -8,7 +9,7 @@ class Destination:
 
     def __init__(self, name, location, description, user_id, id=None):
         self.id = id
-        self.user_id = user_id
+        self.user_id = int(user_id)
         self.name = name
         self.location = location
         self.description = description
@@ -49,6 +50,20 @@ class Destination:
             raise ValueError("your name must be between 1 and 140 characters")
         else:
             self._description = description
+
+    @property
+    def user_id(self):
+        return self._user_id
+
+    @user_id.setter
+    def user_id(self, user_id):
+        if not isinstance(user_id, int):
+            raise TypeError("your user_id must be an integer")
+        from lib.models.user import User
+        if User.find_by_id(user_id) is None:
+            raise ValueError("this user doesn't exist")
+        else:
+            self._user_id = user_id
 
     #########ORM CLASS METHODS
     # CRUD
@@ -106,8 +121,9 @@ class Destination:
 
     @classmethod
     def create(cls, name, location, description, user_id):
+        """Initialize a new Destination instance and save the object to the database"""
         try:
-            """Initialize a new Destination instance and save the object to the database"""
+            user_id = int(user_id)
             destination = cls(name, location, description, user_id)
             destination.save()
             return destination
@@ -118,41 +134,40 @@ class Destination:
             )
             return None
 
-    def update(self):
+    @classmethod
+    def update(cls, destination_id, name, location, description, user_id):
+        """Update the table row corresponding to the current Destination instance."""
         try:
-            """Update the table row corresponding to the current Destination instance."""
             sql = """
                 UPDATE destinations
                 SET name = ?, location = ?, description = ?, user_id =?
                 WHERE id = ?
             """
             CURSOR.execute(
-                sql, (self.name, self.location, self.description, self.user_id, self.id)
+                sql, (name, location, description, user_id, destination_id)
             )
             CONN.commit()
+            return CURSOR.rowcount > 0
         except Exception as e:
             print("there was an issue updating your table row", e)
             return e
-
-    def delete(self):
+        
+    @classmethod
+    def delete(cls, destination_id):
+        """Delete the table row corresponding to the current Destination instance,
+        delete the dictionary entry, and reassign id attribute"""
         try:
-            """Delete the table row corresponding to the current Destination instance,
-            delete the dictionary entry, and reassign id attribute"""
             sql = """
                 DELETE FROM destinations
                 WHERE id = ?
             """
-            CURSOR.execute(sql, (self.id,))
+            CURSOR.execute(sql, (destination_id,))
             CONN.commit()
-            # Delete the dictionary entry using id as the key
-            del type(self).all[self.id]
-            # Set the id to None
-            self.id = None
+            destination_id = None
         except Exception as e:
             print("there was an issue deleting the row from the database")
             return e
 
-    #####
     @classmethod
     def instance_from_db(cls, row):
         try:
@@ -192,6 +207,16 @@ class Destination:
         return None
 
     ######find by and filter
+    @classmethod
+    def find_by_id(cls, destination_id):
+        try:
+            CURSOR.execute("SELECT * FROM destinations WHERE id = ?", (destination_id,))
+            data = CURSOR.fetchone()
+            return cls(data[1], data[2], data[3], data[4], data[0]) if data else None
+        except Exception as e:
+            print(f"Error finding destination by ID: {e}")
+            return None
+
     @classmethod
     def find_by_location(cls, location):
         """Return a Destination object corresponding to the table row matching the specified primary key"""
